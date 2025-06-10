@@ -55,7 +55,7 @@ public interface IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The analysis results.</returns>
-    Task<string> GetAnalysisResultsAsync(Guid id);
+    Task<DatasetAnalysisResultDto> GetAnalysisResultsAsync(Guid id);
 
     /// <summary>
     /// Generates a SAS URL for an existing dataset.

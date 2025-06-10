@@ -115,15 +115,15 @@ public class DatasetsController : BaseApiController
         try
         {
             var results = await datasetService.GetAnalysisResultsAsync(id);
-            if (results == null)
-            {
-                return NotFound("Analysis results not found or not yet available.");
-            }
-            return Content(results, "application/json");
+            return Ok(results);
         }
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
         }
     }
 

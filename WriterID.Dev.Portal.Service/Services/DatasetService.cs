@@ -153,12 +153,22 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The analysis results.</returns>
-    public async Task<string> GetAnalysisResultsAsync(Guid id)
+    public async Task<DatasetAnalysisResultDto> GetAnalysisResultsAsync(Guid id)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         if (dataset == null)
             throw new KeyNotFoundException("Dataset not found.");
-        return await blobService.DownloadFileAsStringAsync(dataset.ContainerName, "analysis-results.json");
+        
+        if (dataset.Status != ProcessingStatus.Completed)
+            throw new InvalidOperationException("Analysis results are only available for completed datasets.");
+            
+        var analysisResultsJson = await blobService.DownloadFileAsStringAsync(dataset.ContainerName, "analysis-results.json");
+        
+        if (string.IsNullOrEmpty(analysisResultsJson))
+            throw new InvalidOperationException("Analysis results not found or empty.");
+            
+        var analysisResults = JsonSerializer.Deserialize<DatasetAnalysisResultDto>(analysisResultsJson);
+        return analysisResults ?? throw new InvalidOperationException("Failed to parse analysis results.");
     }
 
     /// <summary>
