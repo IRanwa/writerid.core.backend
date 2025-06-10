@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Task;
 using WriterID.Dev.Portal.Service.Interfaces;
 
@@ -10,6 +9,9 @@ namespace WriterID.Dev.Portal.Controllers;
 /// </summary>
 public class TasksController : BaseApiController
 {
+    /// <summary>
+    /// The task service
+    /// </summary>
     private readonly ITaskService taskService;
 
     /// <summary>
@@ -27,12 +29,10 @@ public class TasksController : BaseApiController
     /// <param name="dto">The task creation data.</param>
     /// <returns>A 201 Created response containing the created task.</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(WriterIdentificationTask), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
     {
-        var task = await taskService.CreateTaskAsync(dto, CurrentUserId);
-        return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
+        var taskDto = await taskService.CreateTaskAsync(dto, CurrentUserId);
+        return CreatedAtAction(nameof(GetById), new { id = taskDto.Id }, taskDto);
     }
 
     /// <summary>
@@ -41,12 +41,10 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(WriterIdentificationTask), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
-        var task = await taskService.GetTaskByIdAsync(id);
-        return Ok(task);
+        var taskDto = await taskService.GetTaskByIdAsync(id);
+        return Ok(taskDto);
     }
 
     /// <summary>
@@ -54,11 +52,10 @@ public class TasksController : BaseApiController
     /// </summary>
     /// <returns>A list of tasks.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(List<WriterIdentificationTask>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
-        var tasks = await taskService.GetUserTasksAsync(CurrentUserId);
-        return Ok(tasks);
+        var taskDtos = await taskService.GetUserTasksAsync(CurrentUserId);
+        return Ok(taskDtos);
     }
 
     /// <summary>
@@ -68,13 +65,10 @@ public class TasksController : BaseApiController
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(WriterIdentificationTask), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTaskDto dto)
     {
-        var task = await taskService.UpdateTaskAsync(id, dto);
-        return Ok(task);
+        var taskDto = await taskService.UpdateTaskAsync(id, dto);
+        return Ok(taskDto);
     }
 
     /// <summary>
@@ -83,8 +77,6 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>A no content response if successful.</returns>
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         await taskService.DeleteTaskAsync(id);
@@ -97,9 +89,6 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>An accepted response if the task started successfully.</returns>
     [HttpPost("{id}/execute")]
-    [ProducesResponseType(StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> StartExecution(int id)
     {
         await taskService.StartTaskAsync(id);

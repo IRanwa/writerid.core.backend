@@ -1,8 +1,9 @@
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using WriterID.Dev.Portal.Data.Interfaces;
 using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Task;
-using WriterID.Dev.Portal.Model.Enums;
+using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Service.Interfaces;
 
 namespace WriterID.Dev.Portal.Service.Services;
@@ -14,18 +15,22 @@ public class TaskService : ITaskService
 {
     private readonly IUnitOfWork unitOfWork;
     private readonly ILogger<TaskService> logger;
+    private readonly IMapper mapper;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskService"/> class.
     /// </summary>
     /// <param name="unitOfWork">The unit of work.</param>
     /// <param name="logger">The logger instance.</param>
+    /// <param name="mapper">The mapper instance.</param>
     public TaskService(
         IUnitOfWork unitOfWork,
-        ILogger<TaskService> logger)
+        ILogger<TaskService> logger,
+        IMapper mapper)
     {
         this.unitOfWork = unitOfWork;
         this.logger = logger;
+        this.mapper = mapper;
     }
 
     /// <summary>
@@ -34,24 +39,16 @@ public class TaskService : ITaskService
     /// <param name="dto">The task creation data.</param>
     /// <param name="userId">The ID of the user creating the task.</param>
     /// <returns>The created task.</returns>
-    public async Task<WriterIdentificationTask> CreateTaskAsync(CreateTaskDto dto, int userId)
+    public async Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, int userId)
     {
-        var task = new WriterIdentificationTask
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            ModelId = dto.ModelId,
-            DatasetId = dto.DatasetId,
-            Status = WriterID.Dev.Portal.Model.Enums.TaskStatus.Created,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var task = mapper.Map<WriterIdentificationTask>(dto);
+        task.UserId = userId;
+        task.Status = TaskExecutionStatus.Created;
 
         await unitOfWork.Tasks.AddAsync(task);
         await unitOfWork.SaveChangesAsync();
 
-        return task;
+        return mapper.Map<TaskDto>(task);
     }
 
     /// <summary>
@@ -59,16 +56,10 @@ public class TaskService : ITaskService
     /// </summary>
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
-    public async Task<WriterIdentificationTask> GetTaskByIdAsync(int id)
+    public async Task<TaskDto> GetTaskByIdAsync(int id)
     {
-        var task = await unitOfWork.Tasks.GetByIdAsync(id);
-
-        if (task == null)
-        {
-            throw new KeyNotFoundException($"Task with ID {id} not found.");
-        }
-
-        return task;
+        var task = await GetRawTaskByIdAsync(id);
+        return mapper.Map<TaskDto>(task);
     }
 
     /// <summary>
@@ -76,10 +67,11 @@ public class TaskService : ITaskService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of tasks for the user.</returns>
-    public async Task<List<WriterIdentificationTask>> GetUserTasksAsync(int userId)
+    public async Task<List<TaskDto>> GetUserTasksAsync(int userId)
     {
-        var tasks = await unitOfWork.Tasks.FindAsync(t => t.UserId == userId);
-        return tasks.OrderByDescending(t => t.CreatedAt).ToList();
+        var tasks = await unitOfWork.Tasks.FindAsync(t => t.UserId == userId && t.IsActive);
+        var orderedTasks = tasks.OrderByDescending(t => t.CreatedAt).ToList();
+        return mapper.Map<List<TaskDto>>(orderedTasks);
     }
 
     /// <summary>
@@ -88,18 +80,17 @@ public class TaskService : ITaskService
     /// <param name="id">The task identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
-    public async Task<WriterIdentificationTask> UpdateTaskAsync(int id, UpdateTaskDto dto)
+    public async Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto)
     {
-        var task = await GetTaskByIdAsync(id);
+        var task = await GetRawTaskByIdAsync(id);
 
-        task.Name = dto.Name;
-        task.Description = dto.Description;
+        mapper.Map(dto, task);
         task.UpdatedAt = DateTime.UtcNow;
 
         unitOfWork.Tasks.Update(task);
         await unitOfWork.SaveChangesAsync();
 
-        return task;
+        return mapper.Map<TaskDto>(task);
     }
 
     /// <summary>
@@ -108,9 +99,10 @@ public class TaskService : ITaskService
     /// <param name="id">The task identifier.</param>
     public async Task DeleteTaskAsync(int id)
     {
-        var task = await GetTaskByIdAsync(id);
+        var task = await GetRawTaskByIdAsync(id);
 
-        unitOfWork.Tasks.Remove(task);
+        task.IsActive = false;
+        unitOfWork.Tasks.Update(task);
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -120,12 +112,22 @@ public class TaskService : ITaskService
     /// <param name="id">The task identifier.</param>
     public async Task StartTaskAsync(int id)
     {
-        var task = await GetTaskByIdAsync(id);
+        var task = await GetRawTaskByIdAsync(id);
 
-        task.Status = WriterID.Dev.Portal.Model.Enums.TaskStatus.Processing;
+        task.Status = TaskExecutionStatus.Processing;
         task.UpdatedAt = DateTime.UtcNow;
         
         unitOfWork.Tasks.Update(task);
         await unitOfWork.SaveChangesAsync();
+    }
+    
+    private async Task<WriterIdentificationTask> GetRawTaskByIdAsync(int id)
+    {
+        var task = await unitOfWork.Tasks.GetByIdAsync(id);
+        if (task == null || !task.IsActive)
+        {
+            throw new KeyNotFoundException($"Task with ID {id} not found.");
+        }
+        return task;
     }
 } 

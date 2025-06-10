@@ -1,9 +1,10 @@
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using WriterID.Dev.Portal.Data.Interfaces;
 using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Model;
 using WriterID.Dev.Portal.Model.Queue;
-using WriterID.Dev.Portal.Model.Enums;
+using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Service.Interfaces;
 
 namespace WriterID.Dev.Portal.Service.Services;
@@ -17,6 +18,7 @@ public class ModelService : IModelService
     private readonly IAzureQueueService queueService;
     private readonly IAzureStorageService storageService;
     private readonly ILogger<ModelService> logger;
+    private readonly IMapper mapper;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ModelService"/> class.
@@ -25,16 +27,19 @@ public class ModelService : IModelService
     /// <param name="queueService">The Azure queue service.</param>
     /// <param name="storageService">The Azure storage service.</param>
     /// <param name="logger">The logger instance.</param>
+    /// <param name="mapper">The mapper instance.</param>
     public ModelService(
         IUnitOfWork unitOfWork,
         IAzureQueueService queueService,
         IAzureStorageService storageService,
-        ILogger<ModelService> logger)
+        ILogger<ModelService> logger,
+        IMapper mapper)
     {
         this.unitOfWork = unitOfWork;
         this.queueService = queueService;
         this.storageService = storageService;
         this.logger = logger;
+        this.mapper = mapper;
     }
 
     /// <summary>
@@ -43,28 +48,19 @@ public class ModelService : IModelService
     /// <param name="dto">The model creation data.</param>
     /// <param name="userId">The ID of the user creating the model.</param>
     /// <returns>The created model.</returns>
-    public async Task<WriterIdentificationModel> CreateModelAsync(CreateModelDto dto, int userId)
+    public async Task<ModelDto> CreateModelAsync(CreateModelDto dto, int userId)
     {
-        var containerName = $"model-{Guid.NewGuid()}";
-        
-        var model = new WriterIdentificationModel
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            ContainerName = containerName,
-            Status = ModelStatus.Created,
-            TrainingDatasetId = dto.TrainingDatasetId,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var model = mapper.Map<WriterIdentificationModel>(dto);
+        model.ContainerName = $"model-{Guid.NewGuid()}";
+        model.Status = ModelStatus.Created;
+        model.UserId = userId;
 
         await unitOfWork.Models.AddAsync(model);
         await unitOfWork.SaveChangesAsync();
 
-        await storageService.CreateContainerAsync(containerName);
+        await storageService.CreateContainerAsync(model.ContainerName);
 
-        return model;
+        return mapper.Map<ModelDto>(model);
     }
 
     /// <summary>
@@ -72,16 +68,10 @@ public class ModelService : IModelService
     /// </summary>
     /// <param name="id">The model identifier.</param>
     /// <returns>The model if found.</returns>
-    public async Task<WriterIdentificationModel> GetModelByIdAsync(int id)
+    public async Task<ModelDto> GetModelByIdAsync(int id)
     {
-        var model = await unitOfWork.Models.GetByIdAsync(id);
-
-        if (model == null)
-        {
-            throw new KeyNotFoundException($"Model with ID {id} not found.");
-        }
-
-        return model;
+        var model = await GetRawModelByIdAsync(id);
+        return mapper.Map<ModelDto>(model);
     }
 
     /// <summary>
@@ -89,10 +79,11 @@ public class ModelService : IModelService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of models for the user.</returns>
-    public async Task<List<WriterIdentificationModel>> GetUserModelsAsync(int userId)
+    public async Task<List<ModelDto>> GetUserModelsAsync(int userId)
     {
-        var models = await unitOfWork.Models.FindAsync(m => m.UserId == userId);
-        return models.OrderByDescending(m => m.CreatedAt).ToList();
+        var models = await unitOfWork.Models.FindAsync(m => m.UserId == userId && m.IsActive);
+        var orderedModels = models.OrderByDescending(m => m.CreatedAt).ToList();
+        return mapper.Map<List<ModelDto>>(orderedModels);
     }
 
     /// <summary>
@@ -101,18 +92,17 @@ public class ModelService : IModelService
     /// <param name="id">The model identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated model.</returns>
-    public async Task<WriterIdentificationModel> UpdateModelAsync(int id, UpdateModelDto dto)
+    public async Task<ModelDto> UpdateModelAsync(int id, UpdateModelDto dto)
     {
-        var model = await GetModelByIdAsync(id);
+        var model = await GetRawModelByIdAsync(id);
 
-        model.Name = dto.Name;
-        model.Description = dto.Description;
+        mapper.Map(dto, model);
         model.UpdatedAt = DateTime.UtcNow;
 
         unitOfWork.Models.Update(model);
         await unitOfWork.SaveChangesAsync();
 
-        return model;
+        return mapper.Map<ModelDto>(model);
     }
 
     /// <summary>
@@ -121,11 +111,12 @@ public class ModelService : IModelService
     /// <param name="id">The model identifier.</param>
     public async Task DeleteModelAsync(int id)
     {
-        var model = await GetModelByIdAsync(id);
+        var model = await GetRawModelByIdAsync(id);
 
         await storageService.DeleteContainerAsync(model.ContainerName);
 
-        unitOfWork.Models.Remove(model);
+        model.IsActive = false;
+        unitOfWork.Models.Update(model);
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -135,7 +126,7 @@ public class ModelService : IModelService
     /// <param name="id">The model identifier.</param>
     public async Task StartTrainingAsync(int id)
     {
-        var model = await GetModelByIdAsync(id);
+        var model = await GetRawModelByIdAsync(id);
 
         var message = new ModelTrainingMessage
         {
@@ -155,5 +146,15 @@ public class ModelService : IModelService
         
         unitOfWork.Models.Update(model);
         await unitOfWork.SaveChangesAsync();
+    }
+
+    private async Task<WriterIdentificationModel> GetRawModelByIdAsync(int id)
+    {
+        var model = await unitOfWork.Models.GetByIdAsync(id);
+        if (model == null || !model.IsActive)
+        {
+            throw new KeyNotFoundException($"Model with ID {id} not found.");
+        }
+        return model;
     }
 } 

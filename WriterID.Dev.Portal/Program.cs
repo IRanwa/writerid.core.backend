@@ -9,13 +9,20 @@ using WriterID.Dev.Portal.Data.Interfaces;
 using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Service.Interfaces;
 using WriterID.Dev.Portal.Service.Services;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var serverVersion = new MySqlServerVersion(new Version(8, 0, 21));
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseMySql(connectionString, serverVersion,
+        mysqlOptions => mysqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null)
+    ));
 
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -74,6 +81,9 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAzureStorageService, AzureStorageService>();
 builder.Services.AddScoped<IAzureQueueService, AzureQueueService>();
 
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(ITaskService).Assembly);
+
 builder.Services.AddControllers();
 
 // Configure Swagger
@@ -114,6 +124,18 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+}
+catch (Exception ex)
+{
+  
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

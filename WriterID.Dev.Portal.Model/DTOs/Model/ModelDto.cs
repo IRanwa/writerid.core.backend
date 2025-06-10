@@ -1,5 +1,5 @@
 using System.Text.Json;
-using WriterID.Dev.Portal.Model.Enums;
+using WriterID.Dev.Portal.Core.Enums;
 
 namespace WriterID.Dev.Portal.Model.DTOs.Model;
 
@@ -24,7 +24,7 @@ public class ModelDto
     public string Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the current processing status of the model.
+    /// Gets or sets the current status of the model.
     /// </summary>
     public ModelStatus Status { get; set; }
 
@@ -32,11 +32,6 @@ public class ModelDto
     /// Gets or sets the ID of the dataset used for training this model.
     /// </summary>
     public int TrainingDatasetId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the training results and metrics in JSON format.
-    /// </summary>
-    public JsonDocument TrainingResult { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the model.

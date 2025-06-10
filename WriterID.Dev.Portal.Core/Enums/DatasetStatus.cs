@@ -1,4 +1,4 @@
-namespace WriterID.Dev.Portal.Model.Enums;
+namespace WriterID.Dev.Portal.Core.Enums;
 
 /// <summary>
 /// Represents a dataset status in the writer identification system.

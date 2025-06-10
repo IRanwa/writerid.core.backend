@@ -1,5 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using WriterID.Dev.Portal.Model.Enums;
+using WriterID.Dev.Portal.Core.Enums;
 
 namespace WriterID.Dev.Portal.Model.Entities;
 
@@ -16,11 +17,13 @@ public class WriterIdentificationModel
     /// <summary>
     /// Gets or sets the name of the model.
     /// </summary>
+    [MaxLength(200)]
     public string Name { get; set; }
 
     /// <summary>
     /// Gets or sets the description of the model.
     /// </summary>
+    [MaxLength(1000)]
     public string Description { get; set; }
 
     /// <summary>
@@ -39,11 +42,6 @@ public class WriterIdentificationModel
     public int TrainingDatasetId { get; set; }
 
     /// <summary>
-    /// Gets or sets the training results and metrics in JSON format.
-    /// </summary>
-    public JsonDocument TrainingResult { get; set; }
-
-    /// <summary>
     /// Gets or sets the ID of the user who created the model.
     /// </summary>
     public int UserId { get; set; }
@@ -51,12 +49,17 @@ public class WriterIdentificationModel
     /// <summary>
     /// Gets or sets the date and time when the model was created.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Gets or sets the date and time when the model was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the model is active.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
     
     /// <summary>
     /// Gets or sets the dataset used for training this model.

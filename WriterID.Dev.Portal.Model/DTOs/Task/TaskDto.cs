@@ -1,5 +1,5 @@
 using System.Text.Json;
-using WriterID.Dev.Portal.Model.Enums;
+using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Model.Entities;
 
 namespace WriterID.Dev.Portal.Model.DTOs.Task;
@@ -37,7 +37,7 @@ public class TaskDto
     /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
-    public Enums.TaskStatus Status { get; set; }
+    public TaskStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the list of identified writer IDs from the analysis.
@@ -63,27 +63,4 @@ public class TaskDto
     /// Gets or sets the date and time when the task was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Creates a new instance of TaskDto from a WriterIdentificationTask entity.
-    /// </summary>
-    /// <param name="task">The task entity to convert.</param>
-    /// <returns>A new TaskDto instance.</returns>
-    public static TaskDto FromEntity(WriterIdentificationTask task)
-    {
-        return new TaskDto
-        {
-            Id = task.Id,
-            Name = task.Name,
-            Description = task.Description,
-            ModelId = task.ModelId,
-            DatasetId = task.DatasetId,
-            Status = task.Status,
-            WriterIds = task.WriterIds,
-            Result = task.Result,
-            UserId = task.UserId,
-            CreatedAt = task.CreatedAt,
-            UpdatedAt = task.UpdatedAt
-        };
-    }
 } 

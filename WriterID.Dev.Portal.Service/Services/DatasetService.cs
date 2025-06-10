@@ -1,10 +1,13 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using WriterID.Dev.Portal.Data;
 using WriterID.Dev.Portal.Data.Interfaces;
+using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Dataset;
 using WriterID.Dev.Portal.Model.Queue;
-using WriterID.Dev.Portal.Model.Enums;
 using WriterID.Dev.Portal.Service.Interfaces;
 
 namespace WriterID.Dev.Portal.Service.Services;
@@ -18,6 +21,7 @@ public class DatasetService : IDatasetService
     private readonly IAzureStorageService storageService;
     private readonly IAzureQueueService queueService;
     private readonly ILogger<DatasetService> logger;
+    private readonly IMapper mapper;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DatasetService"/> class.
@@ -26,16 +30,19 @@ public class DatasetService : IDatasetService
     /// <param name="storageService">The Azure storage service.</param>
     /// <param name="queueService">The Azure queue service.</param>
     /// <param name="logger">The logger instance.</param>
+    /// <param name="mapper">The mapper instance.</param>
     public DatasetService(
         IUnitOfWork unitOfWork,
         IAzureStorageService storageService,
         IAzureQueueService queueService,
-        ILogger<DatasetService> logger)
+        ILogger<DatasetService> logger,
+        IMapper mapper)
     {
         this.unitOfWork = unitOfWork;
         this.storageService = storageService;
         this.queueService = queueService;
         this.logger = logger;
+        this.mapper = mapper;
     }
 
     /// <summary>
@@ -45,30 +52,21 @@ public class DatasetService : IDatasetService
     /// <param name="file">The uploaded file.</param>
     /// <param name="userId">The ID of the user creating the dataset.</param>
     /// <returns>The created dataset.</returns>
-    public async Task<Dataset> CreateDatasetAsync(CreateDatasetDto dto, IFormFile file, int userId)
+    public async Task<DatasetDto> CreateDatasetAsync(CreateDatasetDto dto, IFormFile file, int userId)
     {
-        var containerName = $"dataset-{Guid.NewGuid()}";
-        var fileName = $"{Guid.NewGuid()}-{file.FileName}";
-
-        var dataset = new Dataset
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            ContainerName = containerName,
-            FileName = fileName,
-            FileSize = file.Length,
-            Status = DatasetStatus.Uploading,
-            ProcessingStatus = ProcessingStatus.Created,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var dataset = mapper.Map<Dataset>(dto);
+        dataset.ContainerName = $"dataset-{Guid.NewGuid()}";
+        dataset.FileName = $"{Guid.NewGuid()}-{file.FileName}";
+        dataset.FileSize = file.Length;
+        dataset.Status = DatasetStatus.Uploading;
+        dataset.ProcessingStatus = ProcessingStatus.Created;
+        dataset.UserId = userId;
 
         await unitOfWork.Datasets.AddAsync(dataset);
         await unitOfWork.SaveChangesAsync();
 
-        await storageService.CreateContainerAsync(containerName);
-        await storageService.UploadFileAsync(containerName, fileName, file.OpenReadStream());
+        await storageService.CreateContainerAsync(dataset.ContainerName);
+        await storageService.UploadFileAsync(dataset.ContainerName, dataset.FileName, file.OpenReadStream());
 
         dataset.Status = DatasetStatus.Uploaded;
         unitOfWork.Datasets.Update(dataset);
@@ -87,7 +85,7 @@ public class DatasetService : IDatasetService
 
         await queueService.SendDatasetAnalysisMessageAsync(message);
 
-        return dataset;
+        return mapper.Map<DatasetDto>(dataset);
     }
 
     /// <summary>
@@ -95,16 +93,10 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
-    public async Task<Dataset> GetDatasetByIdAsync(int id)
+    public async Task<DatasetDto> GetDatasetByIdAsync(int id)
     {
-        var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
-
-        if (dataset == null)
-        {
-            throw new KeyNotFoundException($"Dataset with ID {id} not found.");
-        }
-
-        return dataset;
+        var dataset = await GetRawDatasetByIdAsync(id);
+        return mapper.Map<DatasetDto>(dataset);
     }
 
     /// <summary>
@@ -112,10 +104,11 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of datasets for the user.</returns>
-    public async Task<List<Dataset>> GetUserDatasetsAsync(int userId)
+    public async Task<List<DatasetDto>> GetUserDatasetsAsync(int userId)
     {
-        var datasets = await unitOfWork.Datasets.FindAsync(d => d.UserId == userId);
-        return datasets.OrderByDescending(d => d.CreatedAt).ToList();
+        var datasets = await unitOfWork.Datasets.FindAsync(d => d.UserId == userId && d.IsActive);
+        var orderedDatasets = datasets.OrderByDescending(d => d.CreatedAt).ToList();
+        return mapper.Map<List<DatasetDto>>(orderedDatasets);
     }
 
     /// <summary>
@@ -124,18 +117,17 @@ public class DatasetService : IDatasetService
     /// <param name="id">The dataset identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated dataset.</returns>
-    public async Task<Dataset> UpdateDatasetAsync(int id, UpdateDatasetDto dto)
+    public async Task<DatasetDto> UpdateDatasetAsync(int id, UpdateDatasetDto dto)
     {
-        var dataset = await GetDatasetByIdAsync(id);
+        var dataset = await GetRawDatasetByIdAsync(id);
 
-        dataset.Name = dto.Name;
-        dataset.Description = dto.Description;
+        mapper.Map(dto, dataset);
         dataset.UpdatedAt = DateTime.UtcNow;
 
         unitOfWork.Datasets.Update(dataset);
         await unitOfWork.SaveChangesAsync();
 
-        return dataset;
+        return mapper.Map<DatasetDto>(dataset);
     }
 
     /// <summary>
@@ -144,11 +136,12 @@ public class DatasetService : IDatasetService
     /// <param name="id">The dataset identifier.</param>
     public async Task DeleteDatasetAsync(int id)
     {
-        var dataset = await GetDatasetByIdAsync(id);
+        var dataset = await GetRawDatasetByIdAsync(id);
 
         await storageService.DeleteContainerAsync(dataset.ContainerName);
 
-        unitOfWork.Datasets.Remove(dataset);
+        dataset.IsActive = false;
+        unitOfWork.Datasets.Update(dataset);
         await unitOfWork.SaveChangesAsync();
     }
 
@@ -159,9 +152,19 @@ public class DatasetService : IDatasetService
     /// <returns>The file stream and file name.</returns>
     public async Task<(Stream fileStream, string fileName)> DownloadDatasetAsync(int id)
     {
-        var dataset = await GetDatasetByIdAsync(id);
+        var dataset = await GetRawDatasetByIdAsync(id);
 
         var fileStream = await storageService.DownloadFileAsync(dataset.ContainerName, dataset.FileName);
         return (fileStream, dataset.FileName);
+    }
+
+    private async Task<Dataset> GetRawDatasetByIdAsync(int id)
+    {
+        var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
+        if (dataset == null || !dataset.IsActive)
+        {
+            throw new KeyNotFoundException($"Dataset with ID {id} not found.");
+        }
+        return dataset;
     }
 } 

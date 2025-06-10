@@ -1,9 +1,9 @@
-namespace WriterID.Dev.Portal.Model.Enums;
+namespace WriterID.Dev.Portal.Core.Enums;
 
 /// <summary>
 /// Represents the status of a writer identification task.
 /// </summary>
-public enum TaskStatus
+public enum TaskExecutionStatus
 {
     /// <summary>
     /// The task has been created but not yet started.

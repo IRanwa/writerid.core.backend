@@ -8,13 +8,6 @@ namespace WriterID.Dev.Portal.Model.DTOs.User;
 public class UserForRegistrationDto
 {
     /// <summary>
-    /// Gets or sets the username.
-    /// </summary>
-    [Required]
-    [StringLength(50)]
-    public string Username { get; set; }
-
-    /// <summary>
     /// Gets or sets the email address.
     /// </summary>
     [Required]

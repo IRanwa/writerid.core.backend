@@ -1,4 +1,3 @@
-using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Model;
 
 namespace WriterID.Dev.Portal.Service.Interfaces;
@@ -14,21 +13,21 @@ public interface IModelService
     /// <param name="dto">The model creation data.</param>
     /// <param name="userId">The ID of the user creating the model.</param>
     /// <returns>The created model.</returns>
-    Task<WriterIdentificationModel> CreateModelAsync(CreateModelDto dto, int userId);
+    Task<ModelDto> CreateModelAsync(CreateModelDto dto, int userId);
 
     /// <summary>
     /// Retrieves a model by its identifier.
     /// </summary>
     /// <param name="id">The model identifier.</param>
     /// <returns>The model if found.</returns>
-    Task<WriterIdentificationModel> GetModelByIdAsync(int id);
+    Task<ModelDto> GetModelByIdAsync(int id);
 
     /// <summary>
     /// Retrieves all models for a specific user.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of models for the user.</returns>
-    Task<List<WriterIdentificationModel>> GetUserModelsAsync(int userId);
+    Task<List<ModelDto>> GetUserModelsAsync(int userId);
 
     /// <summary>
     /// Updates an existing model.
@@ -36,7 +35,7 @@ public interface IModelService
     /// <param name="id">The model identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated model.</returns>
-    Task<WriterIdentificationModel> UpdateModelAsync(int id, UpdateModelDto dto);
+    Task<ModelDto> UpdateModelAsync(int id, UpdateModelDto dto);
 
     /// <summary>
     /// Deletes a model.

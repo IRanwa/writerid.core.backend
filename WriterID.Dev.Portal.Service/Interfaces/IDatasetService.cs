@@ -16,21 +16,21 @@ public interface IDatasetService
     /// <param name="file">The uploaded file.</param>
     /// <param name="userId">The ID of the user creating the dataset.</param>
     /// <returns>The created dataset.</returns>
-    Task<Dataset> CreateDatasetAsync(CreateDatasetDto dto, IFormFile file, int userId);
+    Task<DatasetDto> CreateDatasetAsync(CreateDatasetDto dto, IFormFile file, int userId);
 
     /// <summary>
     /// Retrieves a dataset by its identifier.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
-    Task<Dataset> GetDatasetByIdAsync(int id);
+    Task<DatasetDto> GetDatasetByIdAsync(int id);
 
     /// <summary>
     /// Retrieves all datasets for a specific user.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of datasets for the user.</returns>
-    Task<List<Dataset>> GetUserDatasetsAsync(int userId);
+    Task<List<DatasetDto>> GetUserDatasetsAsync(int userId);
 
     /// <summary>
     /// Updates an existing dataset.
@@ -38,7 +38,7 @@ public interface IDatasetService
     /// <param name="id">The dataset identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated dataset.</returns>
-    Task<Dataset> UpdateDatasetAsync(int id, UpdateDatasetDto dto);
+    Task<DatasetDto> UpdateDatasetAsync(int id, UpdateDatasetDto dto);
 
     /// <summary>
     /// Deletes a dataset.

@@ -99,7 +99,7 @@ public class AzureStorageService : IAzureStorageService
     /// <param name="blobName">The name of the blob.</param>
     /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
     /// <returns>The SAS URL for uploading files.</returns>
-    public async Task<string> GetUploadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60)
+    public string GetUploadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60)
     {
         try
         {
@@ -137,7 +137,7 @@ public class AzureStorageService : IAzureStorageService
     /// <param name="blobName">The name of the blob.</param>
     /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
     /// <returns>The SAS URL for downloading files.</returns>
-    public async Task<string> GetDownloadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60)
+    public string GetDownloadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60)
     {
         try
         {

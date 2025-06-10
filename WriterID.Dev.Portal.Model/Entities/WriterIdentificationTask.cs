@@ -1,5 +1,6 @@
 using System.Text.Json;
-using WriterID.Dev.Portal.Model.Enums;
+using System.ComponentModel.DataAnnotations;
+using WriterID.Dev.Portal.Core.Enums;
 
 namespace WriterID.Dev.Portal.Model.Entities;
 
@@ -16,11 +17,13 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the name of the task.
     /// </summary>
+    [MaxLength(200)]
     public string Name { get; set; }
 
     /// <summary>
     /// Gets or sets the description of the task.
     /// </summary>
+    [MaxLength(1000)]
     public string Description { get; set; }
 
     /// <summary>
@@ -36,17 +39,7 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
-    public Enums.TaskStatus Status { get; set; }
-
-    /// <summary>
-    /// Gets or sets the list of identified writer IDs from the analysis.
-    /// </summary>
-    public List<string> WriterIds { get; set; }
-
-    /// <summary>
-    /// Gets or sets the detailed results of the writer identification in JSON format.
-    /// </summary>
-    public JsonDocument Result { get; set; }
+    public TaskExecutionStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the task.
@@ -56,12 +49,17 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the date and time when the task was created.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Gets or sets the date and time when the task was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the task is active.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
     
     /// <summary>
     /// Gets or sets the model used for writer identification.

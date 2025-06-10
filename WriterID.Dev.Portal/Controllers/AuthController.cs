@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -27,14 +28,21 @@ public class AuthController : ControllerBase
     private readonly IConfiguration configuration;
 
     /// <summary>
+    /// The mapper instance
+    /// </summary>
+    private readonly IMapper mapper;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="AuthController"/> class.
     /// </summary>
     /// <param name="userManager">The user manager.</param>
     /// <param name="configuration">The configuration.</param>
-    public AuthController(UserManager<User> userManager, IConfiguration configuration)
+    /// <param name="mapper">The mapper instance.</param>
+    public AuthController(UserManager<User> userManager, IConfiguration configuration, IMapper mapper)
     {
         this.userManager = userManager;
         this.configuration = configuration;
+        this.mapper = mapper;
     }
 
     /// <summary>
@@ -45,21 +53,11 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserForRegistrationDto userForRegistration)
     {
-        var user = new User
-        {
-            UserName = userForRegistration.Username,
-            Email = userForRegistration.Email,
-            FirstName = userForRegistration.FirstName,
-            LastName = userForRegistration.LastName,
-            CreatedAt = DateTime.UtcNow
-        };
+        var user = mapper.Map<User>(userForRegistration);
+        user.LockoutEnabled = false;
         var result = await userManager.CreateAsync(user, userForRegistration.Password);
-
         if (!result.Succeeded)
-        {
             return BadRequest(result.Errors);
-        }
-
         return StatusCode(201);
     }
 
@@ -73,18 +71,13 @@ public class AuthController : ControllerBase
     {
         var user = await userManager.FindByNameAsync(userForLogin.Username);
         if (user == null || !await userManager.CheckPasswordAsync(user, userForLogin.Password))
-        {
             return Unauthorized();
-        }
-
         var authClaims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
-
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? ""));
-
         var token = new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
@@ -92,7 +85,6 @@ public class AuthController : ControllerBase
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
         );
-
         return Ok(new
         {
             token = new JwtSecurityTokenHandler().WriteToken(token),

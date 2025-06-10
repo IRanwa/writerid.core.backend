@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
@@ -17,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WriterID.Dev.Portal.Data\WriterID.Dev.Portal.Data.csproj" />
     <ProjectReference Include="..\WriterID.Dev.Portal.Model\WriterID.Dev.Portal.Model.csproj" />
+    <ProjectReference Include="..\WriterID.Dev.Portal.Core\WriterID.Dev.Portal.Core.csproj" />
   </ItemGroup>
 
 </Project> 

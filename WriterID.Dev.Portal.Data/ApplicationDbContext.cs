@@ -43,45 +43,17 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, i
     {
         base.OnModelCreating(builder);
 
-        // Configure User entity
-        builder.Entity<User>(entity =>
-        {
-            entity.ToTable("Users");
-            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-        });
-
-        // Configure Dataset entity
+        // Configure relationships with cascade delete behavior
         builder.Entity<Dataset>(entity =>
         {
-            entity.ToTable("Datasets");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.ContainerName).IsRequired();
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.AnalysisResult).HasColumnType("jsonb");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            
             entity.HasOne(d => d.User)
                 .WithMany()
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure Model entity
         builder.Entity<WriterIdentificationModel>(entity =>
         {
-            entity.ToTable("Models");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.ContainerName).IsRequired();
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.TrainingResult).HasColumnType("jsonb");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            
             entity.HasOne(m => m.User)
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
@@ -93,18 +65,8 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, i
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure WriterIdentificationTask entity
         builder.Entity<WriterIdentificationTask>(entity =>
         {
-            entity.ToTable("Tasks");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.WriterIds).HasColumnType("jsonb");
-            entity.Property(e => e.Result).HasColumnType("jsonb");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            
             entity.HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)

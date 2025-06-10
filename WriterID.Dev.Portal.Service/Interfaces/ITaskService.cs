@@ -14,21 +14,21 @@ public interface ITaskService
     /// <param name="dto">The task creation data.</param>
     /// <param name="userId">The ID of the user creating the task.</param>
     /// <returns>The created task.</returns>
-    Task<WriterIdentificationTask> CreateTaskAsync(CreateTaskDto dto, int userId);
+    Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, int userId);
 
     /// <summary>
     /// Retrieves a task by its identifier.
     /// </summary>
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
-    Task<WriterIdentificationTask> GetTaskByIdAsync(int id);
+    Task<TaskDto> GetTaskByIdAsync(int id);
 
     /// <summary>
     /// Retrieves all tasks for a specific user.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of tasks for the user.</returns>
-    Task<List<WriterIdentificationTask>> GetUserTasksAsync(int userId);
+    Task<List<TaskDto>> GetUserTasksAsync(int userId);
 
     /// <summary>
     /// Updates an existing task.
@@ -36,7 +36,7 @@ public interface ITaskService
     /// <param name="id">The task identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
-    Task<WriterIdentificationTask> UpdateTaskAsync(int id, UpdateTaskDto dto);
+    Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto);
 
     /// <summary>
     /// Deletes a task.

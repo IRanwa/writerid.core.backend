@@ -30,24 +30,6 @@ public interface IAzureStorageService
     Task<Stream> DownloadFileAsync(string containerName, string blobName);
 
     /// <summary>
-    /// Generates a SAS URL for uploading files to a container.
-    /// </summary>
-    /// <param name="containerName">The name of the container.</param>
-    /// <param name="blobName">The name of the blob.</param>
-    /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
-    /// <returns>The SAS URL for uploading files.</returns>
-    Task<string> GetUploadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60);
-
-    /// <summary>
-    /// Generates a SAS URL for downloading files from a container.
-    /// </summary>
-    /// <param name="containerName">The name of the container.</param>
-    /// <param name="blobName">The name of the blob.</param>
-    /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
-    /// <returns>The SAS URL for downloading files.</returns>
-    Task<string> GetDownloadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60);
-
-    /// <summary>
     /// Lists all blobs in a container asynchronously.
     /// </summary>
     /// <param name="containerName">The name of the container.</param>
@@ -66,4 +48,22 @@ public interface IAzureStorageService
     /// </summary>
     /// <param name="containerName">The name of the container to delete.</param>
     Task DeleteContainerAsync(string containerName);
+
+    /// <summary>
+    /// Generates a SAS URL for uploading files to a container.
+    /// </summary>
+    /// <param name="containerName">The name of the container.</param>
+    /// <param name="blobName">The name of the blob.</param>
+    /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
+    /// <returns>The SAS URL for uploading files.</returns>
+    string GetUploadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60);
+
+    /// <summary>
+    /// Generates a SAS URL for downloading files from a container.
+    /// </summary>
+    /// <param name="containerName">The name of the container.</param>
+    /// <param name="blobName">The name of the blob.</param>
+    /// <param name="expiryMinutes">The number of minutes until the SAS token expires.</param>
+    /// <returns>The SAS URL for downloading files.</returns>
+    string GetDownloadSasUrlAsync(string containerName, string blobName, int expiryMinutes = 60);
 } 

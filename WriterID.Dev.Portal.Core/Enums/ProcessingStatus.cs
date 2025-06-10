@@ -1,4 +1,4 @@
-namespace WriterID.Dev.Portal.Model.Enums;
+namespace WriterID.Dev.Portal.Core.Enums;
 
 /// <summary>
 /// Represents the current status of a processing operation in the system.
