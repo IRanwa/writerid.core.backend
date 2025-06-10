@@ -44,7 +44,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+})
+.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -78,7 +79,8 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
-});
+})
+.AddScheme<WriterID.Dev.Portal.Authentication.ApiKeyAuthenticationSchemeOptions, WriterID.Dev.Portal.Authentication.ApiKeyAuthenticationHandler>("ApiKey", options => { });
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -128,17 +130,17 @@ builder.Services.AddSwaggerGen(c =>
     });
     
     // Add server information for Postman
-    c.AddServer(new OpenApiServer
-    {
-        Url = "https://localhost:5001",
-        Description = "Development HTTPS"
-    });
+    //c.AddServer(new OpenApiServer
+    //{
+    //    Url = "https://localhost:5001",
+    //    Description = "Development HTTPS"
+    //});
     
-    c.AddServer(new OpenApiServer
-    {
-        Url = "http://localhost:5000", 
-        Description = "Development HTTP"
-    });
+    //c.AddServer(new OpenApiServer
+    //{
+    //    Url = "http://localhost:5000", 
+    //    Description = "Development HTTP"
+    //});
     
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -150,6 +152,14 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT"
     });
 
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "API Key for external services. Example: \"X-API-Key: your-api-key\"",
+        Name = "X-API-Key",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -159,6 +169,21 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
                 }
             },
             Array.Empty<string>()

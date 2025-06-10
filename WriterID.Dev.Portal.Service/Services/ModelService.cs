@@ -68,7 +68,7 @@ public class ModelService : IModelService
     /// </summary>
     /// <param name="id">The model identifier.</param>
     /// <returns>The model if found.</returns>
-    public async Task<ModelDto> GetModelByIdAsync(int id)
+    public async Task<ModelDto> GetModelByIdAsync(Guid id)
     {
         var model = await GetRawModelByIdAsync(id);
         return mapper.Map<ModelDto>(model);
@@ -92,7 +92,7 @@ public class ModelService : IModelService
     /// <param name="id">The model identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated model.</returns>
-    public async Task<ModelDto> UpdateModelAsync(int id, UpdateModelDto dto)
+    public async Task<ModelDto> UpdateModelAsync(Guid id, UpdateModelDto dto)
     {
         var model = await GetRawModelByIdAsync(id);
 
@@ -109,7 +109,7 @@ public class ModelService : IModelService
     /// Deletes a model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    public async Task DeleteModelAsync(int id)
+    public async Task DeleteModelAsync(Guid id)
     {
         var model = await GetRawModelByIdAsync(id);
 
@@ -124,7 +124,7 @@ public class ModelService : IModelService
     /// Starts the training of a model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    public async Task StartTrainingAsync(int id)
+    public async Task StartTrainingAsync(Guid id)
     {
         var model = await GetRawModelByIdAsync(id);
 
@@ -148,7 +148,7 @@ public class ModelService : IModelService
         await unitOfWork.SaveChangesAsync();
     }
 
-    private async Task<WriterIdentificationModel> GetRawModelByIdAsync(int id)
+    private async Task<WriterIdentificationModel> GetRawModelByIdAsync(Guid id)
     {
         var model = await unitOfWork.Models.GetByIdAsync(id);
         if (model == null || !model.IsActive)

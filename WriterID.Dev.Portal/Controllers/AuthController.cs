@@ -62,22 +62,28 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Logs in a user and returns a JWT token.
+    /// Logs in a user and returns a JWT token with user information.
     /// </summary>
     /// <param name="userForLogin">The user login credentials.</param>
-    /// <returns>A JWT token and expiration time if login is successful.</returns>
+    /// <returns>A JWT token, expiration time, and user information if login is successful.</returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserForLoginDto userForLogin)
     {
         var user = await userManager.FindByNameAsync(userForLogin.Username);
         if (user == null || !await userManager.CheckPasswordAsync(user, userForLogin.Password))
             return Unauthorized();
+
         var authClaims = new[]
         {
             new Claim(ClaimTypes.Name, user.Id.ToString() ?? "0"),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString() ?? "0"),
             new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? ""),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim(ClaimTypes.GivenName, user.FirstName ?? ""),
+            new Claim(ClaimTypes.Surname, user.LastName ?? "")
         };
+
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? ""));
         var token = new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"],
@@ -86,10 +92,16 @@ public class AuthController : ControllerBase
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
         );
-        return Ok(new
+
+        var userInfo = mapper.Map<UserInfoDto>(user);
+        
+        var response = new LoginResponseDto
         {
-            token = new JwtSecurityTokenHandler().WriteToken(token),
-            expiration = token.ValidTo
-        });
+            Token = new JwtSecurityTokenHandler().WriteToken(token),
+            Expiration = token.ValidTo,
+            User = userInfo
+        };
+
+        return Ok(response);
     }
 }

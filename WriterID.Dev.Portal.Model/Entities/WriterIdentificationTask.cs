@@ -14,7 +14,7 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the unique identifier for the task.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// Gets or sets the name of the task.
@@ -31,12 +31,12 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the ID of the model used for writer identification.
     /// </summary>
-    public int ModelId { get; set; }
+    public Guid ModelId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the dataset to analyze.
     /// </summary>
-    public int DatasetId { get; set; }
+    public Guid DatasetId { get; set; }
 
     /// <summary>
     /// Gets or sets the current processing status of the task.

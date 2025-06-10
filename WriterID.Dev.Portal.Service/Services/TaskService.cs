@@ -56,7 +56,7 @@ public class TaskService : ITaskService
     /// </summary>
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
-    public async Task<TaskDto> GetTaskByIdAsync(int id)
+    public async Task<TaskDto> GetTaskByIdAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
         return mapper.Map<TaskDto>(task);
@@ -80,7 +80,7 @@ public class TaskService : ITaskService
     /// <param name="id">The task identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
-    public async Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto)
+    public async Task<TaskDto> UpdateTaskAsync(Guid id, UpdateTaskDto dto)
     {
         var task = await GetRawTaskByIdAsync(id);
 
@@ -97,7 +97,7 @@ public class TaskService : ITaskService
     /// Deletes a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    public async Task DeleteTaskAsync(int id)
+    public async Task DeleteTaskAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
 
@@ -110,7 +110,7 @@ public class TaskService : ITaskService
     /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    public async Task StartTaskAsync(int id)
+    public async Task StartTaskAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
 
@@ -121,7 +121,7 @@ public class TaskService : ITaskService
         await unitOfWork.SaveChangesAsync();
     }
     
-    private async Task<WriterIdentificationTask> GetRawTaskByIdAsync(int id)
+    private async Task<WriterIdentificationTask> GetRawTaskByIdAsync(Guid id)
     {
         var task = await unitOfWork.Tasks.GetByIdAsync(id);
         if (task == null || !task.IsActive)

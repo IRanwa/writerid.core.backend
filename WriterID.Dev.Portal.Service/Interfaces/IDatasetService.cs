@@ -14,7 +14,7 @@ public interface IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
-    Task<DatasetDto> GetDatasetByIdAsync(int id);
+    Task<DatasetDto> GetDatasetByIdAsync(Guid id);
 
     /// <summary>
     /// Retrieves all datasets for a specific user.
@@ -27,7 +27,7 @@ public interface IDatasetService
     /// Deletes a dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    Task DeleteDatasetAsync(int id);
+    Task DeleteDatasetAsync(Guid id);
 
     /// <summary>
     /// Creates a new dataset.
@@ -42,18 +42,25 @@ public interface IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <param name="datasetDto">The updated dataset.</param>
-    Task UpdateDatasetAsync(int id, DatasetDto datasetDto);
+    Task UpdateDatasetAsync(Guid id, DatasetDto datasetDto);
 
     /// <summary>
     /// Analyzes a dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    Task AnalyzeDatasetAsync(int id);
+    Task AnalyzeDatasetAsync(Guid id);
 
     /// <summary>
     /// Retrieves the analysis results for a dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The analysis results.</returns>
-    Task<string> GetAnalysisResultsAsync(int id);
+    Task<string> GetAnalysisResultsAsync(Guid id);
+
+    /// <summary>
+    /// Generates a SAS URL for an existing dataset.
+    /// </summary>
+    /// <param name="id">The dataset identifier.</param>
+    /// <returns>The SAS URI for the dataset container.</returns>
+    Task<Uri> GenerateSasUrlAsync(Guid id);
 } 

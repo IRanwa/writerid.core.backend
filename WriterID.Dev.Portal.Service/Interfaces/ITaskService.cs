@@ -21,7 +21,7 @@ public interface ITaskService
     /// </summary>
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
-    Task<TaskDto> GetTaskByIdAsync(int id);
+    Task<TaskDto> GetTaskByIdAsync(Guid id);
 
     /// <summary>
     /// Retrieves all tasks for a specific user.
@@ -36,17 +36,17 @@ public interface ITaskService
     /// <param name="id">The task identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
-    Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto dto);
+    Task<TaskDto> UpdateTaskAsync(Guid id, UpdateTaskDto dto);
 
     /// <summary>
     /// Deletes a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    Task DeleteTaskAsync(int id);
+    Task DeleteTaskAsync(Guid id);
 
     /// <summary>
     /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    Task StartTaskAsync(int id);
+    Task StartTaskAsync(Guid id);
 } 

@@ -14,7 +14,7 @@ public class Dataset
     /// Gets or sets the unique identifier for the dataset.
     /// </summary>
     [Key]
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// Gets or sets the name of the dataset.

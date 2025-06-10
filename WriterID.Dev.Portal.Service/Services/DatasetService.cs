@@ -78,7 +78,7 @@ public class DatasetService : IDatasetService
     /// <returns>A list of datasets for the user.</returns>
     public async Task<IEnumerable<DatasetDto>> GetAllDatasetsAsync(int userId)
     {
-        var datasets = await unitOfWork.Datasets.FindAsync(d => d.UserId == userId);
+        var datasets = await unitOfWork.Datasets.FindAsync(d => d.UserId == userId && d.IsActive);
         return mapper.Map<IEnumerable<DatasetDto>>(datasets);
     }
 
@@ -87,7 +87,7 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
-    public async Task<DatasetDto> GetDatasetByIdAsync(int id)
+    public async Task<DatasetDto> GetDatasetByIdAsync(Guid id)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         return mapper.Map<DatasetDto>(dataset);
@@ -98,7 +98,7 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <param name="dto">The update data.</param>
-    public async Task UpdateDatasetAsync(int id, DatasetDto datasetDto)
+    public async Task UpdateDatasetAsync(Guid id, DatasetDto datasetDto)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         if (dataset == null)
@@ -115,7 +115,7 @@ public class DatasetService : IDatasetService
     /// Deletes a dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    public async Task DeleteDatasetAsync(int id)
+    public async Task DeleteDatasetAsync(Guid id)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         if (dataset != null)
@@ -131,15 +131,18 @@ public class DatasetService : IDatasetService
     /// Analyzes a dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    public async Task AnalyzeDatasetAsync(int id)
+    public async Task AnalyzeDatasetAsync(Guid id)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         if (dataset == null)
             throw new KeyNotFoundException("Dataset not found.");
+        dataset.Status = ProcessingStatus.Processing;
+        await unitOfWork.SaveChangesAsync();
         var message = new
         {
             task = "analyze_dataset",
-            @params = new { container_name = dataset.ContainerName }
+            taskId = id.ToString(),
+            container_name = dataset.ContainerName
         };
         var messageString = JsonSerializer.Serialize(message);
         await queueService.SendMessageAsync("writerid-task-queue", messageString);
@@ -150,11 +153,28 @@ public class DatasetService : IDatasetService
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The analysis results.</returns>
-    public async Task<string> GetAnalysisResultsAsync(int id)
+    public async Task<string> GetAnalysisResultsAsync(Guid id)
     {
         var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
         if (dataset == null)
             throw new KeyNotFoundException("Dataset not found.");
         return await blobService.DownloadFileAsStringAsync(dataset.ContainerName, "analysis-results.json");
+    }
+
+    /// <summary>
+    /// Generates a SAS URL for an existing dataset.
+    /// </summary>
+    /// <param name="id">The dataset identifier.</param>
+    /// <returns>The SAS URI for the dataset container.</returns>
+    public async Task<Uri> GenerateSasUrlAsync(Guid id)
+    {
+        var dataset = await unitOfWork.Datasets.GetByIdAsync(id);
+        if (dataset == null)
+            throw new KeyNotFoundException("Dataset not found.");
+        
+        if (string.IsNullOrEmpty(dataset.ContainerName))
+            throw new InvalidOperationException("Dataset container name is not set.");
+        
+        return await blobService.CreateContainerAndGetSasUriAsync(dataset.ContainerName);
     }
 }

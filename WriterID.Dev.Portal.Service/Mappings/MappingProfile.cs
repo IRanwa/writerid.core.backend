@@ -29,5 +29,7 @@ public class MappingProfile : Profile
         // User Mappings
         CreateMap<UserForRegistrationDto, User>()
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
+        CreateMap<User, UserInfoDto>()
+            .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.UserName));
     }
 } 

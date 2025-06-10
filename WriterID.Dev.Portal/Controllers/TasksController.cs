@@ -41,7 +41,7 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>The task if found.</returns>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var taskDto = await taskService.GetTaskByIdAsync(id);
         return Ok(taskDto);
@@ -65,7 +65,7 @@ public class TasksController : BaseApiController
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateTaskDto dto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskDto dto)
     {
         var taskDto = await taskService.UpdateTaskAsync(id, dto);
         return Ok(taskDto);
@@ -77,7 +77,7 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>A no content response if successful.</returns>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         await taskService.DeleteTaskAsync(id);
         return NoContent();
@@ -89,7 +89,7 @@ public class TasksController : BaseApiController
     /// <param name="id">The task identifier.</param>
     /// <returns>An accepted response if the task started successfully.</returns>
     [HttpPost("{id}/execute")]
-    public async Task<IActionResult> StartExecution(int id)
+    public async Task<IActionResult> StartExecution(Guid id)
     {
         await taskService.StartTaskAsync(id);
         return Accepted();

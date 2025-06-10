@@ -13,7 +13,7 @@ public class DatasetDto
     /// <summary>
     /// Gets or sets the unique identifier for the dataset.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the dataset.

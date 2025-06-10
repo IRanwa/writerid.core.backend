@@ -11,7 +11,7 @@ public class ModelDto
     /// <summary>
     /// Gets or sets the unique identifier for the model.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the model.
@@ -31,7 +31,7 @@ public class ModelDto
     /// <summary>
     /// Gets or sets the ID of the dataset used for training this model.
     /// </summary>
-    public int TrainingDatasetId { get; set; }
+    public Guid TrainingDatasetId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the model.

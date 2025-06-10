@@ -13,13 +13,19 @@ public class WriterIdentificationModel
     /// <summary>
     /// Gets or sets the unique identifier for the model.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// Gets or sets the name of the model.
     /// </summary>
     [MaxLength(200)]
     public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the description of the model.
+    /// </summary>
+    [MaxLength(1000)]
+    public string Description { get; set; }
 
     /// <summary>
     /// Gets or sets the Azure Storage container name where the model files are stored.
@@ -34,7 +40,7 @@ public class WriterIdentificationModel
     /// <summary>
     /// Gets or sets the ID of the dataset used for training this model.
     /// </summary>
-    public int TrainingDatasetId { get; set; }
+    public Guid TrainingDatasetId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the model.

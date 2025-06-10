@@ -43,7 +43,7 @@ public class DatasetsController : BaseApiController
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(int id)
+    public async Task<IActionResult> Get(Guid id)
     {
         var dataset = await datasetService.GetDatasetByIdAsync(id);
         return Ok(dataset);
@@ -67,7 +67,7 @@ public class DatasetsController : BaseApiController
     /// <param name="datasetDto">The update data.</param>
     /// <returns>A no content response if successful.</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] DatasetDto datasetDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] DatasetDto datasetDto)
     {
         await datasetService.UpdateDatasetAsync(id, datasetDto);
         return NoContent();
@@ -79,7 +79,7 @@ public class DatasetsController : BaseApiController
     /// <param name="id">The dataset identifier.</param>
     /// <returns>A no content response if successful.</returns>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         await datasetService.DeleteDatasetAsync(id);
         return NoContent();
@@ -91,7 +91,7 @@ public class DatasetsController : BaseApiController
     /// <param name="id">The identifier.</param>
     /// <returns>Returns dataset analysis response.</returns>
     [HttpPost("{id}/analyze")]
-    public async Task<IActionResult> Analyze(int id)
+    public async Task<IActionResult> Analyze(Guid id)
     {
         try
         {
@@ -110,7 +110,7 @@ public class DatasetsController : BaseApiController
     /// <param name="id">The identifier.</param>
     /// <returns>Returns analysis result response.</returns>
     [HttpGet("{id}/analysis-results")]
-    public async Task<IActionResult> GetAnalysisResults(int id)
+    public async Task<IActionResult> GetAnalysisResults(Guid id)
     {
         try
         {
@@ -124,6 +124,29 @@ public class DatasetsController : BaseApiController
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Generates a SAS URL for an existing dataset.
+    /// </summary>
+    /// <param name="id">The dataset identifier.</param>
+    /// <returns>Returns the SAS URL for the dataset.</returns>
+    [HttpPost("{id}/generate-sas")]
+    public async Task<IActionResult> GenerateSasUrl(Guid id)
+    {
+        try
+        {
+            var sasUri = await datasetService.GenerateSasUrlAsync(id);
+            return Ok(new { sasUrl = sasUri.ToString(), message = "SAS URL generated successfully." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
         }
     }
 

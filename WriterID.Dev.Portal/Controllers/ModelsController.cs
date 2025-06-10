@@ -41,7 +41,7 @@ public class ModelsController : BaseApiController
     /// <param name="id">The model identifier.</param>
     /// <returns>The model if found.</returns>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var modelDto = await modelService.GetModelByIdAsync(id);
         return Ok(modelDto);
@@ -65,7 +65,7 @@ public class ModelsController : BaseApiController
     /// <param name="dto">The update data.</param>
     /// <returns>The updated model.</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateModelDto dto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateModelDto dto)
     {
         var modelDto = await modelService.UpdateModelAsync(id, dto);
         return Ok(modelDto);
@@ -77,7 +77,7 @@ public class ModelsController : BaseApiController
     /// <param name="id">The model identifier.</param>
     /// <returns>A no content response if successful.</returns>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         await modelService.DeleteModelAsync(id);
         return NoContent();
@@ -89,7 +89,7 @@ public class ModelsController : BaseApiController
     /// <param name="id">The model identifier.</param>
     /// <returns>An accepted response if training started successfully.</returns>
     [HttpPost("{id}/train")]
-    public async Task<IActionResult> StartTraining(int id)
+    public async Task<IActionResult> StartTraining(Guid id)
     {
         await modelService.StartTrainingAsync(id);
         return Accepted();

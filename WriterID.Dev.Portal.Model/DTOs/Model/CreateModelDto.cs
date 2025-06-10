@@ -24,5 +24,5 @@ public class CreateModelDto
     /// Gets or sets the ID of the dataset to use for training.
     /// </summary>
     [Required]
-    public int TrainingDatasetId { get; set; }
+    public Guid TrainingDatasetId { get; set; }
 } 

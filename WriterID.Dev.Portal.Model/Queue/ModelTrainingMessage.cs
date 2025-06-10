@@ -11,7 +11,7 @@ public class ModelTrainingMessage : QueueMessageBase
     /// Gets or sets the ID of the model to train.
     /// </summary>
     [JsonPropertyName("modelId")]
-    public int ModelId { get; set; }
+    public Guid ModelId { get; set; }
 
     /// <summary>
     /// Gets or sets the training parameters.

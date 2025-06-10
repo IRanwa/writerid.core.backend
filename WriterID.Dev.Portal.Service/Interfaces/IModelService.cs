@@ -20,7 +20,7 @@ public interface IModelService
     /// </summary>
     /// <param name="id">The model identifier.</param>
     /// <returns>The model if found.</returns>
-    Task<ModelDto> GetModelByIdAsync(int id);
+    Task<ModelDto> GetModelByIdAsync(Guid id);
 
     /// <summary>
     /// Retrieves all models for a specific user.
@@ -35,17 +35,17 @@ public interface IModelService
     /// <param name="id">The model identifier.</param>
     /// <param name="dto">The update data.</param>
     /// <returns>The updated model.</returns>
-    Task<ModelDto> UpdateModelAsync(int id, UpdateModelDto dto);
+    Task<ModelDto> UpdateModelAsync(Guid id, UpdateModelDto dto);
 
     /// <summary>
     /// Deletes a model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    Task DeleteModelAsync(int id);
+    Task DeleteModelAsync(Guid id);
 
     /// <summary>
     /// Starts the training of a model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    Task StartTrainingAsync(int id);
+    Task StartTrainingAsync(Guid id);
 } 
