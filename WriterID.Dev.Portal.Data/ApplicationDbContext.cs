@@ -72,10 +72,12 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, i
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Model relationship is optional (nullable) when using default model
             entity.HasOne(t => t.Model)
                 .WithMany()
                 .HasForeignKey(t => t.ModelId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             entity.HasOne(t => t.Dataset)
                 .WithMany()

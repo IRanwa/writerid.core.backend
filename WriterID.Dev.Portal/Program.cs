@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using WriterID.Dev.Portal.Data;
 using WriterID.Dev.Portal.Data.Interfaces;
 using WriterID.Dev.Portal.Model.Entities;
+using WriterID.Dev.Portal.Model.Configuration;
 using WriterID.Dev.Portal.Service.Interfaces;
 using WriterID.Dev.Portal.Service.Services;
 using AutoMapper;
@@ -99,6 +100,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(WriterID.Dev.Portal.Data.Repositories.GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IQueueService, QueueService>();
+
+// Configure TaskExecutor settings
+builder.Services.Configure<TaskExecutorSettings>(
+    builder.Configuration.GetSection("TaskExecutor"));
+
+// Register HttpClient for TaskExecutorService
+builder.Services.AddHttpClient<ITaskExecutorService, TaskExecutorService>();
 
 // Register Services
 builder.Services.AddScoped<IDatasetService, DatasetService>();

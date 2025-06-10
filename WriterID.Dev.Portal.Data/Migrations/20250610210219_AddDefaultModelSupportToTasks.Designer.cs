@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WriterID.Dev.Portal.Data;
 
@@ -11,9 +12,11 @@ using WriterID.Dev.Portal.Data;
 namespace WriterID.Dev.Portal.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250610210219_AddDefaultModelSupportToTasks")]
+    partial class AddDefaultModelSupportToTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -344,16 +347,6 @@ namespace WriterID.Dev.Portal.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("QueryImagePath")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("ResultsJson")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("SelectedWriters")
-                        .HasColumnType("longtext");
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -365,6 +358,9 @@ namespace WriterID.Dev.Portal.Data.Migrations
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
+
+                    b.Property<string>("WriterIds")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 

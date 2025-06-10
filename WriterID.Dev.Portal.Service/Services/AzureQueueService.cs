@@ -67,5 +67,27 @@ public class AzureQueueService : IAzureQueueService
             throw;
         }
     }
+
+    /// <summary>
+    /// Sends a writer identification task message to the queue asynchronously.
+    /// </summary>
+    /// <param name="message">The writer identification task message containing task parameters.</param>
+    public async Task SendWriterIdentificationTaskMessageAsync(WriterIdentificationTaskMessage message)
+    {
+        try
+        {
+            var messageJson = JsonSerializer.Serialize(message);
+            await queueClient.SendMessageAsync(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(messageJson)));
+            
+            logger.LogInformation("Sent writer identification task message for task {TaskId} using {ModelType}", 
+                message.TaskId, 
+                message.Parameters.UseDefaultModel ? "default model" : "custom model");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending writer identification task message");
+            throw;
+        }
+    }
 } 
  

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WriterID.Dev.Portal.Model.DTOs.Task;
+using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Service.Interfaces;
 
 namespace WriterID.Dev.Portal.Controllers;
@@ -24,15 +25,35 @@ public class TasksController : BaseApiController
     }
 
     /// <summary>
-    /// Creates a new task.
+    /// Gets the analysis results for a dataset including available writers for selection.
+    /// </summary>
+    /// <param name="datasetId">The dataset identifier.</param>
+    /// <returns>The dataset analysis results with writers list.</returns>
+    [HttpGet("dataset/{datasetId}/analysis")]
+    public async Task<IActionResult> GetDatasetAnalysis(Guid datasetId)
+    {
+        var analysis = await taskService.GetDatasetAnalysisAsync(datasetId);
+        return Ok(analysis);
+    }
+
+    /// <summary>
+    /// Creates a new writer identification task with selected writers and query image, then starts prediction.
     /// </summary>
     /// <param name="dto">The task creation data.</param>
-    /// <returns>A 201 Created response containing the created task.</returns>
+    /// <returns>201 Created if successful, 400 Bad Request if execution fails.</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
     {
-        var taskDto = await taskService.CreateTaskAsync(dto, CurrentUserId);
-        return CreatedAtAction(nameof(GetById), new { id = taskDto.Id }, taskDto);
+        var success = await taskService.CreateTaskAsync(dto, CurrentUserId);
+        
+        if (success)
+        {
+            return StatusCode(201, new { message = "Task created and prediction started successfully" });
+        }
+        else
+        {
+            return BadRequest(new { message = "Task created but failed to start prediction execution" });
+        }
     }
 
     /// <summary>
@@ -59,16 +80,57 @@ public class TasksController : BaseApiController
     }
 
     /// <summary>
-    /// Updates an existing task.
+    /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    /// <param name="dto">The update data.</param>
-    /// <returns>The updated task.</returns>
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskDto dto)
+    /// <returns>An accepted response if the task started successfully.</returns>
+    [HttpPost("{id}/execute")]
+    public async Task<IActionResult> StartExecution(Guid id)
     {
-        var taskDto = await taskService.UpdateTaskAsync(id, dto);
-        return Ok(taskDto);
+        await taskService.StartTaskAsync(id);
+        return Accepted(new { message = "Task execution started", taskId = id });
+    }
+
+    /// <summary>
+    /// Updates task results after processing completion.
+    /// Called by the task executor to provide results.
+    /// </summary>
+    /// <param name="id">The task identifier.</param>
+    /// <param name="request">The results update request.</param>
+    /// <returns>An ok response if the update was successful.</returns>
+    [HttpPost("{id}/results")]
+    public async Task<IActionResult> UpdateResults(Guid id, [FromBody] TaskResultsUpdateRequest request)
+    {
+        await taskService.UpdateTaskResultsAsync(id, request.ResultsJson, request.Status);
+        return Ok(new { message = "Task results updated", taskId = id });
+    }
+
+    /// <summary>
+    /// Gets task execution details for the executor service.
+    /// This endpoint provides the information needed by the task executor to process the task.
+    /// </summary>
+    /// <param name="id">The task identifier.</param>
+    /// <returns>The task execution details.</returns>
+    [HttpGet("{id}/execution-details")]
+    public async Task<IActionResult> GetExecutionDetails(Guid id)
+    {
+        var taskDto = await taskService.GetTaskByIdAsync(id);
+        
+        var executionDetails = new
+        {
+            taskId = taskDto.Id,
+            useDefaultModel = taskDto.UseDefaultModel,
+            modelId = taskDto.ModelId,
+            datasetId = taskDto.DatasetId,
+            selectedWriters = taskDto.SelectedWriters,
+            queryImagePath = taskDto.QueryImagePath,
+            status = taskDto.Status.ToString(),
+            createdAt = taskDto.CreatedAt,
+            name = taskDto.Name,
+            description = taskDto.Description
+        };
+
+        return Ok(executionDetails);
     }
 
     /// <summary>
@@ -82,16 +144,20 @@ public class TasksController : BaseApiController
         await taskService.DeleteTaskAsync(id);
         return NoContent();
     }
+}
+
+/// <summary>
+/// Request model for updating task results.
+/// </summary>
+public class TaskResultsUpdateRequest
+{
+    /// <summary>
+    /// Gets or sets the results in JSON format.
+    /// </summary>
+    public string ResultsJson { get; set; }
 
     /// <summary>
-    /// Starts the execution of a task.
+    /// Gets or sets the final status of the task.
     /// </summary>
-    /// <param name="id">The task identifier.</param>
-    /// <returns>An accepted response if the task started successfully.</returns>
-    [HttpPost("{id}/execute")]
-    public async Task<IActionResult> StartExecution(Guid id)
-    {
-        await taskService.StartTaskAsync(id);
-        return Accepted();
-    }
+    public ProcessingStatus Status { get; set; }
 } 

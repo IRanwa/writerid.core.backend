@@ -18,4 +18,10 @@ public interface IAzureQueueService
     /// </summary>
     /// <param name="message">The model training message containing training parameters.</param>
     Task SendModelTrainingMessageAsync(ModelTrainingMessage message);
+
+    /// <summary>
+    /// Sends a writer identification task message to the queue asynchronously.
+    /// </summary>
+    /// <param name="message">The writer identification task message containing task parameters.</param>
+    Task SendWriterIdentificationTaskMessageAsync(WriterIdentificationTaskMessage message);
 } 

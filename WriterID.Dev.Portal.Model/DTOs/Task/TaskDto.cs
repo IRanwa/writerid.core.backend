@@ -25,9 +25,15 @@ public class TaskDto
     public string Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the ID of the model used for writer identification.
+    /// Gets or sets a value indicating whether this task uses the default model.
     /// </summary>
-    public Guid ModelId { get; set; }
+    public bool UseDefaultModel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ID of the custom model used for writer identification.
+    /// This is null when UseDefaultModel is true.
+    /// </summary>
+    public Guid? ModelId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the dataset to analyze.
@@ -35,19 +41,24 @@ public class TaskDto
     public Guid DatasetId { get; set; }
 
     /// <summary>
+    /// Gets or sets the list of selected writer IDs for comparison.
+    /// </summary>
+    public List<string> SelectedWriters { get; set; }
+
+    /// <summary>
+    /// Gets or sets the query image file path or blob URL.
+    /// </summary>
+    public string QueryImagePath { get; set; }
+
+    /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
     public ProcessingStatus Status { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of writer IDs associated with this task.
+    /// Gets or sets the task results in JSON format.
     /// </summary>
-    public List<string> WriterIds { get; set; }
-
-    /// <summary>
-    /// Gets or sets the detailed results of the writer identification in JSON format.
-    /// </summary>
-    public JsonDocument Result { get; set; }
+    public string ResultsJson { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the task.

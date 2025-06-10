@@ -29,9 +29,16 @@ public class WriterIdentificationTask
     public string Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the ID of the model used for writer identification.
+    /// Gets or sets a value indicating whether this task uses the default model.
+    /// If true, the default model from platform-config container (default_model.pth) is used.
     /// </summary>
-    public Guid ModelId { get; set; }
+    public bool UseDefaultModel { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the ID of the custom model used for writer identification.
+    /// This is null when UseDefaultModel is true.
+    /// </summary>
+    public Guid? ModelId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the dataset to analyze.
@@ -39,14 +46,28 @@ public class WriterIdentificationTask
     public Guid DatasetId { get; set; }
 
     /// <summary>
+    /// Gets or sets the list of selected writer IDs for comparison.
+    /// These are the specific writers selected from the dataset analysis results.
+    /// </summary>
+    public List<string> SelectedWriters { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Gets or sets the query image file path or blob URL.
+    /// This is the image to be compared against the selected writers.
+    /// </summary>
+    [MaxLength(500)]
+    public string QueryImagePath { get; set; }
+
+    /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
     public ProcessingStatus Status { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of writer IDs associated with this task.
+    /// Gets or sets the task results in JSON format.
+    /// Contains the writer identification results with confidence scores.
     /// </summary>
-    public List<string> WriterIds { get; set; } = new List<string>();
+    public string ResultsJson { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the task.
@@ -69,7 +90,8 @@ public class WriterIdentificationTask
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the model used for writer identification.
+    /// Gets or sets the custom model used for writer identification.
+    /// This is null when UseDefaultModel is true.
     /// </summary>
     [ForeignKey(nameof(ModelId))]
     public virtual WriterIdentificationModel Model { get; set; }

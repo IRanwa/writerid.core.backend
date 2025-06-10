@@ -80,4 +80,46 @@ public class BlobService : IBlobService
         var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
         await containerClient.DeleteIfExistsAsync();
     }
+
+    /// <summary>
+    /// Creates a task container for storing task-related files.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <returns>The container name that was created.</returns>
+    public async Task<string> CreateTaskContainerAsync(Guid taskId)
+    {
+        var containerName = $"task-{taskId}";
+        var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        await containerClient.CreateIfNotExistsAsync();
+        return containerName;
+    }
+
+    /// <summary>
+    /// Uploads a base64 encoded image to a container as PNG file.
+    /// </summary>
+    /// <param name="containerName">Name of the container.</param>
+    /// <param name="fileName">Name of the file (e.g., "query.png").</param>
+    /// <param name="base64Image">The base64 encoded image string.</param>
+    /// <returns>The blob path of the uploaded image.</returns>
+    public async Task<string> UploadBase64ImageAsync(string containerName, string fileName, string base64Image)
+    {
+        var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        var blobClient = containerClient.GetBlobClient(fileName);
+
+        // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+        var base64Data = base64Image;
+        if (base64Image.Contains(","))
+        {
+            base64Data = base64Image.Split(',')[1];
+        }
+
+        // Convert base64 to byte array
+        var imageBytes = Convert.FromBase64String(base64Data);
+
+        // Upload the image
+        using var stream = new MemoryStream(imageBytes);
+        await blobClient.UploadAsync(stream, overwrite: true);
+
+        return $"{containerName}/{fileName}";
+    }
 }

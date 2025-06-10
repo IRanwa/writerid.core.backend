@@ -1,5 +1,7 @@
 using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Model.DTOs.Task;
+using WriterID.Dev.Portal.Model.DTOs.Dataset;
+using WriterID.Dev.Portal.Core.Enums;
 
 namespace WriterID.Dev.Portal.Service.Interfaces;
 
@@ -9,12 +11,19 @@ namespace WriterID.Dev.Portal.Service.Interfaces;
 public interface ITaskService
 {
     /// <summary>
-    /// Creates a new writer identification task.
+    /// Gets the analysis results for a dataset including the list of writers.
+    /// </summary>
+    /// <param name="datasetId">The dataset identifier.</param>
+    /// <returns>The dataset analysis results with writers list.</returns>
+    Task<DatasetAnalysisResultDto> GetDatasetAnalysisAsync(Guid datasetId);
+
+    /// <summary>
+    /// Creates a new writer identification task with selected writers and query image, then executes the prediction.
     /// </summary>
     /// <param name="dto">The task creation data.</param>
     /// <param name="userId">The ID of the user creating the task.</param>
-    /// <returns>The created task.</returns>
-    Task<TaskDto> CreateTaskAsync(CreateTaskDto dto, int userId);
+    /// <returns>True if task created and execution started successfully, false otherwise.</returns>
+    Task<bool> CreateTaskAsync(CreateTaskDto dto, int userId);
 
     /// <summary>
     /// Retrieves a task by its identifier.
@@ -37,6 +46,14 @@ public interface ITaskService
     /// <param name="dto">The update data.</param>
     /// <returns>The updated task.</returns>
     Task<TaskDto> UpdateTaskAsync(Guid id, UpdateTaskDto dto);
+
+    /// <summary>
+    /// Updates task results after processing completion.
+    /// </summary>
+    /// <param name="id">The task identifier.</param>
+    /// <param name="resultsJson">The results in JSON format.</param>
+    /// <param name="status">The final status of the task.</param>
+    Task UpdateTaskResultsAsync(Guid id, string resultsJson, ProcessingStatus status);
 
     /// <summary>
     /// Deletes a task.

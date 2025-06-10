@@ -13,7 +13,8 @@ public class MappingProfile : Profile
     {
         // Task Mappings
         CreateMap<WriterIdentificationTask, TaskDto>();
-        CreateMap<CreateTaskDto, WriterIdentificationTask>();
+        CreateMap<CreateTaskDto, WriterIdentificationTask>()
+            .ForMember(dest => dest.QueryImagePath, opt => opt.Ignore()); // Will be set after base64 upload
         CreateMap<UpdateTaskDto, WriterIdentificationTask>();
 
         // Dataset Mappings
