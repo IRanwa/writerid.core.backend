@@ -26,7 +26,7 @@ public class ModelDto
     /// <summary>
     /// Gets or sets the current status of the model.
     /// </summary>
-    public ModelStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the dataset used for training this model.

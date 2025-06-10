@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using WriterID.Dev.Portal.Model.DTOs.Dataset;
 using WriterID.Dev.Portal.Service.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace WriterID.Dev.Portal.Controllers;
 
@@ -26,19 +28,13 @@ public class DatasetsController : BaseApiController
     /// <summary>
     /// Creates a new dataset with file upload.
     /// </summary>
-    /// <param name="dto">The dataset creation data.</param>
-    /// <param name="file">The dataset file to upload.</param>
-    /// <returns>A 201 Created response containing the created dataset.</returns>
+    /// <param name="createDto">The dataset creation data.</param>
+    /// <returns>A 200 OK response containing the generated SAS URL.</returns>
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] CreateDatasetDto dto, IFormFile file)
+    public async Task<IActionResult> Create([FromBody] CreateDatasetRequestDto createDto)
     {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest("File is required");
-        }
-
-        var datasetDto = await datasetService.CreateDatasetAsync(dto, file, CurrentUserId);
-        return CreatedAtAction(nameof(GetById), new { id = datasetDto.Id }, datasetDto);
+        var sasUri = await datasetService.CreateDatasetAsync(createDto, CurrentUserId);
+        return Ok(new { sasUrl = sasUri.ToString() });
     }
 
     /// <summary>
@@ -47,10 +43,10 @@ public class DatasetsController : BaseApiController
     /// <param name="id">The dataset identifier.</param>
     /// <returns>The dataset if found.</returns>
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> Get(int id)
     {
-        var datasetDto = await datasetService.GetDatasetByIdAsync(id);
-        return Ok(datasetDto);
+        var dataset = await datasetService.GetDatasetByIdAsync(id);
+        return Ok(dataset);
     }
 
     /// <summary>
@@ -60,21 +56,21 @@ public class DatasetsController : BaseApiController
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var datasetDtos = await datasetService.GetUserDatasetsAsync(CurrentUserId);
-        return Ok(datasetDtos);
+        var datasets = await datasetService.GetAllDatasetsAsync(CurrentUserId);
+        return Ok(datasets);
     }
 
     /// <summary>
     /// Updates an existing dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    /// <param name="dto">The update data.</param>
-    /// <returns>The updated dataset.</returns>
+    /// <param name="datasetDto">The update data.</param>
+    /// <returns>A no content response if successful.</returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateDatasetDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] DatasetDto datasetDto)
     {
-        var datasetDto = await datasetService.UpdateDatasetAsync(id, dto);
-        return Ok(datasetDto);
+        await datasetService.UpdateDatasetAsync(id, datasetDto);
+        return NoContent();
     }
 
     /// <summary>
@@ -90,14 +86,46 @@ public class DatasetsController : BaseApiController
     }
 
     /// <summary>
-    /// Downloads a dataset file.
+    /// Analyzes the specified identifier.
     /// </summary>
-    /// <param name="id">The dataset identifier.</param>
-    /// <returns>The dataset file for download.</returns>
-    [HttpGet("{id}/download")]
-    public async Task<IActionResult> Download(int id)
+    /// <param name="id">The identifier.</param>
+    /// <returns>Returns dataset analysis response.</returns>
+    [HttpPost("{id}/analyze")]
+    public async Task<IActionResult> Analyze(int id)
     {
-        var (fileStream, fileName) = await datasetService.DownloadDatasetAsync(id);
-        return File(fileStream, "application/octet-stream", fileName);
+        try
+        {
+            await datasetService.AnalyzeDatasetAsync(id);
+            return Ok(new { message = "Dataset analysis has been queued." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
+
+    /// <summary>
+    /// Gets the analysis results.
+    /// </summary>
+    /// <param name="id">The identifier.</param>
+    /// <returns>Returns analysis result response.</returns>
+    [HttpGet("{id}/analysis-results")]
+    public async Task<IActionResult> GetAnalysisResults(int id)
+    {
+        try
+        {
+            var results = await datasetService.GetAnalysisResultsAsync(id);
+            if (results == null)
+            {
+                return NotFound("Analysis results not found or not yet available.");
+            }
+            return Content(results, "application/json");
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    
 }

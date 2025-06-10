@@ -43,7 +43,7 @@ public class TaskService : ITaskService
     {
         var task = mapper.Map<WriterIdentificationTask>(dto);
         task.UserId = userId;
-        task.Status = TaskExecutionStatus.Created;
+        task.Status = ProcessingStatus.Created;
 
         await unitOfWork.Tasks.AddAsync(task);
         await unitOfWork.SaveChangesAsync();
@@ -114,7 +114,7 @@ public class TaskService : ITaskService
     {
         var task = await GetRawTaskByIdAsync(id);
 
-        task.Status = TaskExecutionStatus.Processing;
+        task.Status = ProcessingStatus.Processing;
         task.UpdatedAt = DateTime.UtcNow;
         
         unitOfWork.Tasks.Update(task);

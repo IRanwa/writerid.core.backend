@@ -10,15 +10,6 @@ namespace WriterID.Dev.Portal.Service.Interfaces;
 public interface IDatasetService
 {
     /// <summary>
-    /// Creates a new dataset.
-    /// </summary>
-    /// <param name="dto">The dataset creation data.</param>
-    /// <param name="file">The uploaded file.</param>
-    /// <param name="userId">The ID of the user creating the dataset.</param>
-    /// <returns>The created dataset.</returns>
-    Task<DatasetDto> CreateDatasetAsync(CreateDatasetDto dto, IFormFile file, int userId);
-
-    /// <summary>
     /// Retrieves a dataset by its identifier.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
@@ -30,15 +21,7 @@ public interface IDatasetService
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <returns>A list of datasets for the user.</returns>
-    Task<List<DatasetDto>> GetUserDatasetsAsync(int userId);
-
-    /// <summary>
-    /// Updates an existing dataset.
-    /// </summary>
-    /// <param name="id">The dataset identifier.</param>
-    /// <param name="dto">The update data.</param>
-    /// <returns>The updated dataset.</returns>
-    Task<DatasetDto> UpdateDatasetAsync(int id, UpdateDatasetDto dto);
+    Task<IEnumerable<DatasetDto>> GetAllDatasetsAsync(int userId);
 
     /// <summary>
     /// Deletes a dataset.
@@ -47,9 +30,30 @@ public interface IDatasetService
     Task DeleteDatasetAsync(int id);
 
     /// <summary>
-    /// Downloads a dataset file.
+    /// Creates a new dataset.
+    /// </summary>
+    /// <param name="createDatasetDto">The dataset creation data.</param>
+    /// <param name="userId">The ID of the user creating the dataset.</param>
+    /// <returns>The URI for the SAS token.</returns>
+    Task<Uri> CreateDatasetAsync(CreateDatasetRequestDto createDatasetDto, int userId);
+
+    /// <summary>
+    /// Updates an existing dataset.
     /// </summary>
     /// <param name="id">The dataset identifier.</param>
-    /// <returns>The file stream and file name.</returns>
-    Task<(Stream fileStream, string fileName)> DownloadDatasetAsync(int id);
+    /// <param name="datasetDto">The updated dataset.</param>
+    Task UpdateDatasetAsync(int id, DatasetDto datasetDto);
+
+    /// <summary>
+    /// Analyzes a dataset.
+    /// </summary>
+    /// <param name="id">The dataset identifier.</param>
+    Task AnalyzeDatasetAsync(int id);
+
+    /// <summary>
+    /// Retrieves the analysis results for a dataset.
+    /// </summary>
+    /// <param name="id">The dataset identifier.</param>
+    /// <returns>The analysis results.</returns>
+    Task<string> GetAnalysisResultsAsync(int id);
 } 

@@ -33,7 +33,7 @@ public class DatasetDto
     /// <summary>
     /// Gets or sets the current processing status of the dataset.
     /// </summary>
-    public DatasetStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the dataset.

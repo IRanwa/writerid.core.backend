@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using WriterID.Dev.Portal.Core.Enums;
 
@@ -23,40 +24,16 @@ public class Dataset
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the description of the dataset.
-    /// </summary>
-    [Required]
-    [MaxLength(1000)]
-    public string Description { get; set; }
-
-    /// <summary>
     /// Gets or sets the Azure Storage container name where the dataset files are stored.
     /// </summary>
     [Required]
     public string ContainerName { get; set; }
 
     /// <summary>
-    /// Gets or sets the file name of the uploaded dataset.
+    /// Gets or sets the status.
     /// </summary>
     [Required]
-    public string FileName { get; set; }
-
-    /// <summary>
-    /// Gets or sets the size of the uploaded file in bytes.
-    /// </summary>
-    public long FileSize { get; set; }
-
-    /// <summary>
-    /// Gets or sets the current processing status of the dataset.
-    /// </summary>
-    [Required]
-    public DatasetStatus Status { get; set; }
-
-    /// <summary>
-    /// Gets or sets the processing status for analysis operations.
-    /// </summary>
-    [Required]
-    public ProcessingStatus ProcessingStatus { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the dataset.
@@ -82,5 +59,6 @@ public class Dataset
     /// <summary>
     /// Gets or sets the user who created the dataset.
     /// </summary>
+    [ForeignKey(nameof(UserId))]
     public virtual User User { get; set; }
-} 
+}

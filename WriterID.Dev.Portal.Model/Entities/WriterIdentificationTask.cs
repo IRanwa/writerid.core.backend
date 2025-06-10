@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.ComponentModel.DataAnnotations;
 using WriterID.Dev.Portal.Core.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace WriterID.Dev.Portal.Model.Entities;
 
@@ -39,7 +41,12 @@ public class WriterIdentificationTask
     /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
-    public TaskExecutionStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of writer IDs associated with this task.
+    /// </summary>
+    public List<string> WriterIds { get; set; } = new List<string>();
 
     /// <summary>
     /// Gets or sets the ID of the user who created the task.
@@ -60,19 +67,22 @@ public class WriterIdentificationTask
     /// Gets or sets a value indicating whether the task is active.
     /// </summary>
     public bool IsActive { get; set; } = true;
-    
+
     /// <summary>
     /// Gets or sets the model used for writer identification.
     /// </summary>
+    [ForeignKey(nameof(ModelId))]
     public virtual WriterIdentificationModel Model { get; set; }
 
     /// <summary>
     /// Gets or sets the dataset being analyzed.
     /// </summary>
+    [ForeignKey(nameof(DatasetId))]
     public virtual Dataset Dataset { get; set; }
 
     /// <summary>
     /// Gets or sets the user who created the task.
     /// </summary>
+    [ForeignKey(nameof(UserId))]
     public virtual User User { get; set; }
 } 

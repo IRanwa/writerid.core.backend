@@ -1,0 +1,1 @@
+dotnet ef migrations add 20250610V1 --project .\WriterID.Dev.Portal.Data --startup-project .\WriterID.Dev.Portal

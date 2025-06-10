@@ -10,6 +10,7 @@ using WriterID.Dev.Portal.Model.Entities;
 using WriterID.Dev.Portal.Service.Interfaces;
 using WriterID.Dev.Portal.Service.Services;
 using AutoMapper;
+using WriterID.Dev.Portal.Service.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,13 +48,35 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
+        ValidateIssuer = false,
+        ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? ""))
+    };
+
+    // Optional: Add logging for debugging authentication events
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("Authentication failed.");
+            Console.WriteLine(context.Exception);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token validated successfully.");
+            // You could add custom claims transformation here if needed
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"OnChallenge: {context.Error} - {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -73,6 +96,7 @@ builder.Services.AddCors(options =>
 // Register Repository and Unit of Work
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(WriterID.Dev.Portal.Data.Repositories.GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IQueueService, QueueService>();
 
 // Register Services
 builder.Services.AddScoped<IDatasetService, DatasetService>();
@@ -80,9 +104,10 @@ builder.Services.AddScoped<IModelService, ModelService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAzureStorageService, AzureStorageService>();
 builder.Services.AddScoped<IAzureQueueService, AzureQueueService>();
+builder.Services.AddScoped<IBlobService, BlobService>();
 
-// Add AutoMapper
-builder.Services.AddAutoMapper(typeof(ITaskService).Assembly);
+// Configure AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddControllers();
 
@@ -94,7 +119,25 @@ builder.Services.AddSwaggerGen(c =>
     { 
         Title = "WriterID Portal API", 
         Version = "v1",
-        Description = "API for managing writer identification tasks"
+        Description = "API for managing writer identification tasks, datasets, models, and tasks",
+        Contact = new OpenApiContact
+        {
+            Name = "WriterID Portal",
+            Email = "support@writerid.dev"
+        }
+    });
+    
+    // Add server information for Postman
+    c.AddServer(new OpenApiServer
+    {
+        Url = "https://localhost:5001",
+        Description = "Development HTTPS"
+    });
+    
+    c.AddServer(new OpenApiServer
+    {
+        Url = "http://localhost:5000", 
+        Description = "Development HTTP"
     });
     
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -103,7 +146,8 @@ builder.Services.AddSwaggerGen(c =>
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -120,6 +164,14 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+    
+    // Include XML comments if available
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 var app = builder.Build();

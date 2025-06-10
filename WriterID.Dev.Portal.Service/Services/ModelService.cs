@@ -52,7 +52,7 @@ public class ModelService : IModelService
     {
         var model = mapper.Map<WriterIdentificationModel>(dto);
         model.ContainerName = $"model-{Guid.NewGuid()}";
-        model.Status = ModelStatus.Created;
+        model.Status = ProcessingStatus.Created;
         model.UserId = userId;
 
         await unitOfWork.Models.AddAsync(model);
@@ -141,7 +141,7 @@ public class ModelService : IModelService
 
         await queueService.SendModelTrainingMessageAsync(message);
 
-        model.Status = ModelStatus.Training;
+        model.Status = ProcessingStatus.Processing;
         model.UpdatedAt = DateTime.UtcNow;
         
         unitOfWork.Models.Update(model);

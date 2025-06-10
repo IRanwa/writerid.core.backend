@@ -28,11 +28,6 @@ public class User : IdentityUser<int>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
-    /// Gets or sets the date and time when the user was last updated.
-    /// </summary>
-    public DateTime? UpdatedAt { get; set; }
-    
-    /// <summary>
     /// Gets or sets a value indicating whether the user account is active.
     /// </summary>
     public bool IsActive { get; set; } = true;

@@ -37,10 +37,10 @@ public class TaskDto
     /// <summary>
     /// Gets or sets the current processing status of the task.
     /// </summary>
-    public TaskStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of identified writer IDs from the analysis.
+    /// Gets or sets the list of writer IDs associated with this task.
     /// </summary>
     public List<string> WriterIds { get; set; }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using WriterID.Dev.Portal.Core.Enums;
 
@@ -21,12 +22,6 @@ public class WriterIdentificationModel
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the description of the model.
-    /// </summary>
-    [MaxLength(1000)]
-    public string Description { get; set; }
-
-    /// <summary>
     /// Gets or sets the Azure Storage container name where the model files are stored.
     /// </summary>
     public string ContainerName { get; set; }
@@ -34,7 +29,7 @@ public class WriterIdentificationModel
     /// <summary>
     /// Gets or sets the current processing status of the model.
     /// </summary>
-    public ModelStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the dataset used for training this model.
@@ -60,14 +55,16 @@ public class WriterIdentificationModel
     /// Gets or sets a value indicating whether the model is active.
     /// </summary>
     public bool IsActive { get; set; } = true;
-    
+
     /// <summary>
     /// Gets or sets the dataset used for training this model.
     /// </summary>
+    [ForeignKey(nameof(TrainingDatasetId))]
     public virtual Dataset TrainingDataset { get; set; }
 
     /// <summary>
     /// Gets or sets the user who created the model.
     /// </summary>
+    [ForeignKey(nameof(UserId))]
     public virtual User User { get; set; }
 } 

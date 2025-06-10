@@ -13,7 +13,7 @@ namespace WriterID.Dev.Portal.Controllers;
 /// <summary>
 /// The AuthController class.
 /// </summary>
-[Route("api/v1/auth")]
+[Route("api/v1/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
@@ -74,6 +74,7 @@ public class AuthController : ControllerBase
             return Unauthorized();
         var authClaims = new[]
         {
+            new Claim(ClaimTypes.Name, user.Id.ToString() ?? "0"),
             new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
