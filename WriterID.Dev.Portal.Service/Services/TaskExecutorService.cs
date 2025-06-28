@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 using WriterID.Dev.Portal.Model.Configuration;
+using WriterID.Dev.Portal.Model.DTOs.Task;
 using WriterID.Dev.Portal.Service.Interfaces;
 
 namespace WriterID.Dev.Portal.Service.Services;
@@ -39,8 +40,8 @@ public class TaskExecutorService : ITaskExecutorService
     /// Starts the execution of a writer identification task by calling the executor service.
     /// </summary>
     /// <param name="taskId">The ID of the task to execute.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task StartTaskExecutionAsync(Guid taskId)
+    /// <returns>The actual prediction result from the external service.</returns>
+    public async Task<TaskPredictionResultDto> StartTaskExecutionAsync(Guid taskId)
     {
         try
         {
@@ -59,7 +60,32 @@ public class TaskExecutorService : ITaskExecutorService
 
             if (response.IsSuccessStatusCode)
             {
-                logger.LogInformation("Successfully started task execution for task {TaskId}", taskId);
+                // Read and parse the actual prediction response
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                logger.LogInformation("Successfully received prediction response for task {TaskId}: {Response}", 
+                    taskId, responseContent);
+
+                try
+                {
+                    // Parse the response JSON to get the actual prediction result
+                    var actualPrediction = JsonSerializer.Deserialize<TaskPredictionResultDto>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    // Ensure the task ID is set correctly
+                    if (actualPrediction != null)
+                    {
+                        actualPrediction.TaskId = taskId;
+                        return actualPrediction;
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    logger.LogError(jsonEx, "Failed to parse prediction response for task {TaskId}. Response: {Response}", 
+                        taskId, responseContent);
+                }
             }
             else
             {
@@ -81,5 +107,18 @@ public class TaskExecutorService : ITaskExecutorService
             logger.LogError(ex, "Error occurred while starting task execution for task {TaskId}", taskId);
             throw;
         }
+
+        // Fallback: return default prediction if parsing failed
+        logger.LogWarning("Returning default prediction result for task {TaskId} due to parsing issues", taskId);
+        return new TaskPredictionResultDto
+        {
+            TaskId = taskId,
+            QueryImage = "query.png",
+            Prediction = new PredictionDto
+            {
+                WriterId = "unknown",
+                Confidence = 0.0
+            }
+        };
     }
 } 

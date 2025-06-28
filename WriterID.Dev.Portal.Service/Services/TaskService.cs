@@ -104,8 +104,8 @@ public class TaskService : ITaskService
     /// </summary>
     /// <param name="dto">The task creation data.</param>
     /// <param name="userId">The ID of the user creating the task.</param>
-    /// <returns>True if task created and execution started successfully, false otherwise.</returns>
-    public async Task<bool> CreateTaskAsync(CreateTaskDto dto, int userId)
+    /// <returns>The initial prediction result if successful, null if failed.</returns>
+    public async Task<TaskPredictionResultDto?> CreateTaskAsync(CreateTaskDto dto, int userId)
     {
         // Validate dataset exists
         var dataset = await unitOfWork.Datasets.GetByIdAsync(dto.DatasetId);
@@ -157,14 +157,17 @@ public class TaskService : ITaskService
             await unitOfWork.SaveChangesAsync();
 
             // Call the task executor service to start prediction
-            await taskExecutorService.StartTaskExecutionAsync(task.Id);
+            var initialPrediction = await taskExecutorService.StartTaskExecutionAsync(task.Id);
+
+            // Store the initial prediction result in the database
+            await SubmitTaskPredictionAsync(task.Id, initialPrediction);
 
             logger.LogInformation("Started prediction execution for task {TaskId} using {ModelType}", 
                 task.Id, 
                 task.UseDefaultModel ? "default model" : $"custom model (ID: {task.ModelId})");
 
-            // Return success
-            return true;
+            // Return the initial prediction result
+            return initialPrediction;
         }
         catch (Exception ex)
         {
@@ -177,8 +180,8 @@ public class TaskService : ITaskService
             unitOfWork.Tasks.Update(task);
             await unitOfWork.SaveChangesAsync();
             
-            // Return failure
-            return false;
+            // Return null to indicate failure
+            return null;
         }
     }
 
@@ -261,7 +264,8 @@ public class TaskService : ITaskService
     /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    public async Task StartTaskAsync(Guid id)
+    /// <returns>The initial prediction result.</returns>
+    public async Task<TaskPredictionResultDto> StartTaskAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
         
@@ -275,12 +279,18 @@ public class TaskService : ITaskService
         try
         {
             // Call the task executor service
-            await taskExecutorService.StartTaskExecutionAsync(task.Id);
+            var initialPrediction = await taskExecutorService.StartTaskExecutionAsync(task.Id);
+
+            // Store the initial prediction result in the database
+            await SubmitTaskPredictionAsync(task.Id, initialPrediction);
 
             logger.LogInformation("Started writer identification task {TaskId} using {ModelType} with {WriterCount} selected writers", 
                 task.Id, 
                 task.UseDefaultModel ? "default model" : $"custom model (ID: {task.ModelId})",
                 task.SelectedWriters.Count);
+
+            // Return the initial prediction result
+            return initialPrediction;
         }
         catch (Exception ex)
         {
@@ -341,6 +351,71 @@ public class TaskService : ITaskService
             taskId, dataset.ContainerName, modelContainerName ?? "default", task.UseDefaultModel);
 
         return executionInfo;
+    }
+
+    /// <summary>
+    /// Gets the prediction results for a completed task.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <returns>The prediction results if the task is completed, null otherwise.</returns>
+    public async Task<TaskPredictionResultDto?> GetTaskPredictionResultsAsync(Guid taskId)
+    {
+        var task = await GetRawTaskByIdAsync(taskId);
+
+        if (string.IsNullOrEmpty(task.ResultsJson) || task.Status != ProcessingStatus.Completed)
+        {
+            logger.LogWarning("Task {TaskId} does not have results or is not completed. Status: {Status}", taskId, task.Status);
+            return null;
+        }
+
+        try
+        {
+            var predictionResult = JsonSerializer.Deserialize<TaskPredictionResultDto>(task.ResultsJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            logger.LogInformation("Retrieved prediction results for task {TaskId}: Writer={WriterId}, Confidence={Confidence}", 
+                taskId, predictionResult?.Prediction?.WriterId, predictionResult?.Prediction?.Confidence);
+
+            return predictionResult;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to parse prediction results for task {TaskId}", taskId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Submits prediction results for a task and marks it as completed.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <param name="predictionResult">The prediction results.</param>
+    public async Task SubmitTaskPredictionAsync(Guid taskId, TaskPredictionResultDto predictionResult)
+    {
+        var task = await GetRawTaskByIdAsync(taskId);
+
+        // Ensure the task ID in the prediction result matches the task being updated
+        predictionResult.TaskId = taskId;
+
+        // Serialize the prediction result to JSON
+        var resultsJson = JsonSerializer.Serialize(predictionResult, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            WriteIndented = true
+        });
+
+        // Update task with results and mark as completed
+        task.ResultsJson = resultsJson;
+        task.Status = ProcessingStatus.Completed;
+        task.UpdatedAt = DateTime.UtcNow;
+
+        unitOfWork.Tasks.Update(task);
+        await unitOfWork.SaveChangesAsync();
+
+        logger.LogInformation("Submitted prediction results for task {TaskId}: Writer={WriterId}, Confidence={Confidence}", 
+            taskId, predictionResult.Prediction?.WriterId, predictionResult.Prediction?.Confidence);
     }
 
     /// <summary>

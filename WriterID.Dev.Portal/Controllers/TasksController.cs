@@ -40,15 +40,18 @@ public class TasksController : BaseApiController
     /// Creates a new writer identification task with selected writers and query image, then starts prediction.
     /// </summary>
     /// <param name="dto">The task creation data.</param>
-    /// <returns>201 Created if successful, 400 Bad Request if execution fails.</returns>
+    /// <returns>201 Created with prediction result if successful, 400 Bad Request if execution fails.</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
     {
-        var success = await taskService.CreateTaskAsync(dto, CurrentUserId);
+        var predictionResult = await taskService.CreateTaskAsync(dto, CurrentUserId);
         
-        if (success)
+        if (predictionResult != null)
         {
-            return StatusCode(201, new { message = "Task created and prediction started successfully" });
+            return StatusCode(201, new { 
+                message = "Task created and prediction started successfully",
+                prediction = predictionResult
+            });
         }
         else
         {
@@ -83,12 +86,48 @@ public class TasksController : BaseApiController
     /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    /// <returns>An accepted response if the task started successfully.</returns>
+    /// <returns>An accepted response with prediction result if the task started successfully.</returns>
     [HttpPost("{id}/execute")]
     public async Task<IActionResult> StartExecution(Guid id)
     {
-        await taskService.StartTaskAsync(id);
-        return Accepted(new { message = "Task execution started", taskId = id });
+        var predictionResult = await taskService.StartTaskAsync(id);
+        return Accepted(new { 
+            message = "Task execution started", 
+            taskId = id,
+            prediction = predictionResult
+        });
+    }
+
+    /// <summary>
+    /// Submits prediction results for a task.
+    /// Called by the task executor to provide prediction results directly.
+    /// </summary>
+    /// <param name="id">The task identifier.</param>
+    /// <param name="predictionResult">The prediction results.</param>
+    /// <returns>An ok response if the prediction was stored successfully.</returns>
+    [HttpPost("{id}/prediction")]
+    public async Task<IActionResult> SubmitPredictionResults(Guid id, [FromBody] TaskPredictionResultDto predictionResult)
+    {
+        await taskService.SubmitTaskPredictionAsync(id, predictionResult);
+        return Ok(new { message = "Prediction results submitted successfully", taskId = id });
+    }
+
+    /// <summary>
+    /// Gets the prediction results for a completed task.
+    /// </summary>
+    /// <param name="id">The task identifier.</param>
+    /// <returns>The prediction results if available.</returns>
+    [HttpGet("{id}/prediction")]
+    public async Task<IActionResult> GetPredictionResults(Guid id)
+    {
+        var predictionResult = await taskService.GetTaskPredictionResultsAsync(id);
+        
+        if (predictionResult == null)
+        {
+            return NotFound(new { message = "Prediction results not available for this task" });
+        }
+
+        return Ok(predictionResult);
     }
 
     /// <summary>

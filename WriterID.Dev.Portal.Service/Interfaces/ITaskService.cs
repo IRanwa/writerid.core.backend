@@ -22,8 +22,8 @@ public interface ITaskService
     /// </summary>
     /// <param name="dto">The task creation data.</param>
     /// <param name="userId">The ID of the user creating the task.</param>
-    /// <returns>True if task created and execution started successfully, false otherwise.</returns>
-    Task<bool> CreateTaskAsync(CreateTaskDto dto, int userId);
+    /// <returns>The initial prediction result if successful, null if failed.</returns>
+    Task<TaskPredictionResultDto?> CreateTaskAsync(CreateTaskDto dto, int userId);
 
     /// <summary>
     /// Retrieves a task by its identifier.
@@ -65,7 +65,8 @@ public interface ITaskService
     /// Starts the execution of a task.
     /// </summary>
     /// <param name="id">The task identifier.</param>
-    Task StartTaskAsync(Guid id);
+    /// <returns>The initial prediction result.</returns>
+    Task<TaskPredictionResultDto> StartTaskAsync(Guid id);
 
     /// <summary>
     /// Gets task execution information including all container names for external processing.
@@ -73,4 +74,18 @@ public interface ITaskService
     /// <param name="taskId">The task identifier.</param>
     /// <returns>The task execution information.</returns>
     Task<TaskExecutionInfoDto> GetTaskExecutionInfoAsync(Guid taskId);
+
+    /// <summary>
+    /// Gets the prediction results for a completed task.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <returns>The prediction results if the task is completed, null otherwise.</returns>
+    Task<TaskPredictionResultDto?> GetTaskPredictionResultsAsync(Guid taskId);
+
+    /// <summary>
+    /// Submits prediction results for a task and marks it as completed.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <param name="predictionResult">The prediction results.</param>
+    Task SubmitTaskPredictionAsync(Guid taskId, TaskPredictionResultDto predictionResult);
 } 

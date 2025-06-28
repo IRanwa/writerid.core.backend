@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using WriterID.Dev.Portal.Core.Enums;
 using WriterID.Dev.Portal.Model.Entities;
 
@@ -17,12 +18,12 @@ public class TaskDto
     /// <summary>
     /// Gets or sets the name of the task.
     /// </summary>
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the task.
     /// </summary>
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether this task uses the default model.
@@ -43,12 +44,12 @@ public class TaskDto
     /// <summary>
     /// Gets or sets the list of selected writer IDs for comparison.
     /// </summary>
-    public List<string> SelectedWriters { get; set; }
+    public List<string> SelectedWriters { get; set; } = new List<string>();
 
     /// <summary>
     /// Gets or sets the query image file path or blob URL.
     /// </summary>
-    public string QueryImagePath { get; set; }
+    public string QueryImagePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the current processing status of the task.
@@ -58,7 +59,7 @@ public class TaskDto
     /// <summary>
     /// Gets or sets the task results in JSON format.
     /// </summary>
-    public string ResultsJson { get; set; }
+    public string ResultsJson { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the ID of the user who created the task.
@@ -74,4 +75,31 @@ public class TaskDto
     /// Gets or sets the date and time when the task was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Gets the parsed prediction result from the ResultsJson.
+    /// Returns null if the task is not completed or results are not available.
+    /// </summary>
+    [JsonIgnore]
+    public PredictionDto? PredictionResult
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(ResultsJson) || Status != ProcessingStatus.Completed)
+                return null;
+
+            try
+            {
+                var predictionResult = JsonSerializer.Deserialize<TaskPredictionResultDto>(ResultsJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return predictionResult?.Prediction;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
 } 
