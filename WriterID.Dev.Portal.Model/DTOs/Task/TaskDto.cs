@@ -42,6 +42,17 @@ public class TaskDto
     public Guid DatasetId { get; set; }
 
     /// <summary>
+    /// Gets or sets the name of the dataset.
+    /// </summary>
+    public string DatasetName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the name of the model used for this task.
+    /// Returns "Default" if using the default model.
+    /// </summary>
+    public string ModelName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the list of selected writer IDs for comparison.
     /// </summary>
     public List<string> SelectedWriters { get; set; } = new List<string>();
@@ -50,6 +61,12 @@ public class TaskDto
     /// Gets or sets the query image file path or blob URL.
     /// </summary>
     public string QueryImagePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the query image as base64 string.
+    /// Only populated when retrieving individual task details.
+    /// </summary>
+    public string QueryImageBase64 { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the current processing status of the task.

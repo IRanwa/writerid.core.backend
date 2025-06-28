@@ -41,4 +41,12 @@ public interface IBlobService
     /// <param name="base64Image">The base64 encoded image string.</param>
     /// <returns>The blob path of the uploaded image.</returns>
     Task<string> UploadBase64ImageAsync(string containerName, string fileName, string base64Image);
+
+    /// <summary>
+    /// Downloads an image file from blob storage as base64 string.
+    /// </summary>
+    /// <param name="containerName">Name of the container.</param>
+    /// <param name="fileName">Name of the file.</param>
+    /// <returns>The image as base64 string, or null if not found.</returns>
+    Task<string?> DownloadImageAsBase64Async(string containerName, string fileName);
 }

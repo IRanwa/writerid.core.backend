@@ -122,4 +122,31 @@ public class BlobService : IBlobService
 
         return $"{containerName}/{fileName}";
     }
+
+    /// <summary>
+    /// Downloads an image file from blob storage as base64 string.
+    /// </summary>
+    /// <param name="containerName">Name of the container.</param>
+    /// <param name="fileName">Name of the file.</param>
+    /// <returns>The image as base64 string, or null if not found.</returns>
+    public async Task<string?> DownloadImageAsBase64Async(string containerName, string fileName)
+    {
+        try
+        {
+            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(fileName);
+            
+            if (!await blobClient.ExistsAsync())
+                return null;
+
+            var response = await blobClient.DownloadContentAsync();
+            var imageBytes = response.Value.Content.ToArray();
+            
+            return Convert.ToBase64String(imageBytes);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

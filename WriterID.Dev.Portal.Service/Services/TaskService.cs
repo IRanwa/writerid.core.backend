@@ -193,7 +193,49 @@ public class TaskService : ITaskService
     public async Task<TaskDto> GetTaskByIdAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
-        return mapper.Map<TaskDto>(task);
+        var taskDto = mapper.Map<TaskDto>(task);
+        
+        // Load and set dataset name
+        var dataset = await unitOfWork.Datasets.GetByIdAsync(task.DatasetId);
+        taskDto.DatasetName = dataset?.Name ?? "Unknown Dataset";
+        
+        // Set model name
+        if (task.UseDefaultModel)
+        {
+            taskDto.ModelName = "Default";
+        }
+        else if (task.ModelId.HasValue)
+        {
+            var model = await unitOfWork.Models.GetByIdAsync(task.ModelId.Value);
+            taskDto.ModelName = model?.Name ?? "Unknown Model";
+        }
+        else
+        {
+            taskDto.ModelName = "Unknown Model";
+        }
+        
+        // Download and set query image as base64
+        try
+        {
+            var taskContainerName = $"task-{task.Id}";
+            var queryImageBase64 = await blobService.DownloadImageAsBase64Async(taskContainerName, "query.png");
+            
+            if (!string.IsNullOrEmpty(queryImageBase64))
+            {
+                taskDto.QueryImageBase64 = queryImageBase64;
+                logger.LogInformation("Retrieved query image for task {TaskId}", id);
+            }
+            else
+            {
+                logger.LogWarning("Query image not found for task {TaskId}", id);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to download query image for task {TaskId}", id);
+        }
+        
+        return taskDto;
     }
 
     /// <summary>
@@ -205,7 +247,48 @@ public class TaskService : ITaskService
     {
         var tasks = await unitOfWork.Tasks.FindAsync(t => t.UserId == userId && t.IsActive);
         var orderedTasks = tasks.OrderByDescending(t => t.CreatedAt).ToList();
-        return mapper.Map<List<TaskDto>>(orderedTasks);
+        
+        // Get unique dataset and model IDs to minimize database queries
+        var datasetIds = orderedTasks.Select(t => t.DatasetId).Distinct().ToList();
+        var modelIds = orderedTasks.Where(t => t.ModelId.HasValue).Select(t => t.ModelId!.Value).Distinct().ToList();
+        
+        // Load datasets and models in bulk
+        var datasets = await unitOfWork.Datasets.FindAsync(d => datasetIds.Contains(d.Id) && d.IsActive);
+        var models = await unitOfWork.Models.FindAsync(m => modelIds.Contains(m.Id) && m.IsActive);
+        
+        // Create dictionaries for efficient lookup
+        var datasetLookup = datasets.ToDictionary(d => d.Id, d => d.Name);
+        var modelLookup = models.ToDictionary(m => m.Id, m => m.Name);
+        
+        // Map tasks to DTOs and populate model and dataset names
+        var taskDtos = new List<TaskDto>();
+        foreach (var task in orderedTasks)
+        {
+            var taskDto = mapper.Map<TaskDto>(task);
+            
+            // Set dataset name
+            taskDto.DatasetName = datasetLookup.TryGetValue(task.DatasetId, out var datasetName) 
+                ? datasetName 
+                : "Unknown Dataset";
+            
+            // Set model name
+            if (task.UseDefaultModel)
+            {
+                taskDto.ModelName = "Default";
+            }
+            else if (task.ModelId.HasValue && modelLookup.TryGetValue(task.ModelId.Value, out var modelName))
+            {
+                taskDto.ModelName = modelName;
+            }
+            else
+            {
+                taskDto.ModelName = "Unknown Model";
+            }
+            
+            taskDtos.Add(taskDto);
+        }
+        
+        return taskDtos;
     }
 
     /// <summary>
