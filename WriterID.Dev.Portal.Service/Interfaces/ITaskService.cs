@@ -76,11 +76,11 @@ public interface ITaskService
     Task<TaskExecutionInfoDto> GetTaskExecutionInfoAsync(Guid taskId);
 
     /// <summary>
-    /// Gets the prediction results for a completed task.
+    /// Gets the prediction results for a completed task with query image base64.
     /// </summary>
     /// <param name="taskId">The task identifier.</param>
-    /// <returns>The prediction results if the task is completed, null otherwise.</returns>
-    Task<TaskPredictionResultDto?> GetTaskPredictionResultsAsync(Guid taskId);
+    /// <returns>The prediction results with query image if the task is completed, null otherwise.</returns>
+    Task<object?> GetTaskPredictionResultsAsync(Guid taskId);
 
     /// <summary>
     /// Submits prediction results for a task and marks it as completed.

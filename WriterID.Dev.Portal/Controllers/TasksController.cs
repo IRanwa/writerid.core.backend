@@ -98,19 +98,7 @@ public class TasksController : BaseApiController
         });
     }
 
-    /// <summary>
-    /// Submits prediction results for a task.
-    /// Called by the task executor to provide prediction results directly.
-    /// </summary>
-    /// <param name="id">The task identifier.</param>
-    /// <param name="predictionResult">The prediction results.</param>
-    /// <returns>An ok response if the prediction was stored successfully.</returns>
-    [HttpPost("{id}/prediction")]
-    public async Task<IActionResult> SubmitPredictionResults(Guid id, [FromBody] TaskPredictionResultDto predictionResult)
-    {
-        await taskService.SubmitTaskPredictionAsync(id, predictionResult);
-        return Ok(new { message = "Prediction results submitted successfully", taskId = id });
-    }
+
 
     /// <summary>
     /// Gets the prediction results for a completed task.

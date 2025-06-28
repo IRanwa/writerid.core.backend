@@ -437,11 +437,11 @@ public class TaskService : ITaskService
     }
 
     /// <summary>
-    /// Gets the prediction results for a completed task.
+    /// Gets the prediction results for a completed task with query image base64.
     /// </summary>
     /// <param name="taskId">The task identifier.</param>
-    /// <returns>The prediction results if the task is completed, null otherwise.</returns>
-    public async Task<TaskPredictionResultDto?> GetTaskPredictionResultsAsync(Guid taskId)
+    /// <returns>The prediction results with query image if the task is completed, null otherwise.</returns>
+    public async Task<object?> GetTaskPredictionResultsAsync(Guid taskId)
     {
         var task = await GetRawTaskByIdAsync(taskId);
 
@@ -458,10 +458,40 @@ public class TaskService : ITaskService
                 PropertyNameCaseInsensitive = true
             });
 
+            // Download and get query image as base64
+            string? queryImageBase64 = null;
+            try
+            {
+                var taskContainerName = $"task-{task.Id}";
+                queryImageBase64 = await blobService.DownloadImageAsBase64Async(taskContainerName, "query.png");
+                
+                if (!string.IsNullOrEmpty(queryImageBase64))
+                {
+                    logger.LogInformation("Retrieved query image for task {TaskId}", taskId);
+                }
+                else
+                {
+                    logger.LogWarning("Query image not found for task {TaskId}", taskId);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to download query image for task {TaskId}", taskId);
+            }
+
+            // Return prediction result with query image base64
+            var response = new
+            {
+                task_id = predictionResult?.TaskId,
+                query_image = predictionResult?.QueryImage,
+                query_image_base64 = queryImageBase64,
+                prediction = predictionResult?.Prediction
+            };
+
             logger.LogInformation("Retrieved prediction results for task {TaskId}: Writer={WriterId}, Confidence={Confidence}", 
                 taskId, predictionResult?.Prediction?.WriterId, predictionResult?.Prediction?.Confidence);
 
-            return predictionResult;
+            return response;
         }
         catch (Exception ex)
         {
