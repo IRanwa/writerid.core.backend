@@ -272,13 +272,29 @@ public class TaskService : ITaskService
         unitOfWork.Tasks.Update(task);
         await unitOfWork.SaveChangesAsync();
 
-        // Call the task executor service
-        await taskExecutorService.StartTaskExecutionAsync(task.Id);
+        try
+        {
+            // Call the task executor service
+            await taskExecutorService.StartTaskExecutionAsync(task.Id);
 
-        logger.LogInformation("Started writer identification task {TaskId} using {ModelType} with {WriterCount} selected writers", 
-            task.Id, 
-            task.UseDefaultModel ? "default model" : $"custom model (ID: {task.ModelId})",
-            task.SelectedWriters.Count);
+            logger.LogInformation("Started writer identification task {TaskId} using {ModelType} with {WriterCount} selected writers", 
+                task.Id, 
+                task.UseDefaultModel ? "default model" : $"custom model (ID: {task.ModelId})",
+                task.SelectedWriters.Count);
+        }
+        catch (Exception ex)
+        {
+            // If execution fails, update task status to failed
+            logger.LogError(ex, "Failed to start writer identification task execution for task {TaskId}", task.Id);
+            
+            task.Status = ProcessingStatus.Failed;
+            task.UpdatedAt = DateTime.UtcNow;
+            
+            unitOfWork.Tasks.Update(task);
+            await unitOfWork.SaveChangesAsync();
+            
+            throw; // Re-throw the exception to let the caller handle it if needed
+        }
     }
 
     /// <summary>
