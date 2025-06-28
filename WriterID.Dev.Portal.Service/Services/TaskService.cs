@@ -331,16 +331,30 @@ public class TaskService : ITaskService
     }
 
     /// <summary>
-    /// Deletes a task.
+    /// Deletes a task and its associated blob container.
     /// </summary>
     /// <param name="id">The task identifier.</param>
     public async Task DeleteTaskAsync(Guid id)
     {
         var task = await GetRawTaskByIdAsync(id);
 
+        // Mark task as inactive
         task.IsActive = false;
         unitOfWork.Tasks.Update(task);
         await unitOfWork.SaveChangesAsync();
+
+        // Delete the associated blob container
+        try
+        {
+            var taskContainerName = $"task-{task.Id}";
+            await blobService.DeleteContainerAsync(taskContainerName);
+            logger.LogInformation("Deleted blob container {ContainerName} for task {TaskId}", taskContainerName, id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to delete blob container for task {TaskId}. Container may not exist or deletion failed.", id);
+            // Don't throw here - task deletion in database should succeed even if blob cleanup fails
+        }
     }
 
     /// <summary>
