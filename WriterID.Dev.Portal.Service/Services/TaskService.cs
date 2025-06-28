@@ -74,43 +74,29 @@ public class TaskService : ITaskService
                 DatasetName = dataset.Name,
                 Status = dataset.Status.ToString(),
                 AnalyzedAt = dataset.UpdatedAt,
-                Writers = new List<WriterInfo>()
+                NumWriters = 0,
+                WriterNames = new List<string>(),
+                MinSamples = 0,
+                MaxSamples = 0,
+                WriterCounts = new Dictionary<string, int>()
             };
         }
 
-        // Parse the JSON to extract writer names
-        var jsonDocument = JsonDocument.Parse(analysisResultsJson);
-        var root = jsonDocument.RootElement;
-        
-        var writers = new List<WriterInfo>();
-        
-        // Extract writer_names array
-        if (root.TryGetProperty("writer_names", out var writerNamesArray) && writerNamesArray.ValueKind == JsonValueKind.Array)
+        // Deserialize the JSON directly to the DTO structure
+        var analysisResult = JsonSerializer.Deserialize<DatasetAnalysisResultDto>(analysisResultsJson, new JsonSerializerOptions
         {
-            foreach (var writerNameElement in writerNamesArray.EnumerateArray())
-            {
-                var writerName = writerNameElement.GetString();
-                if (!string.IsNullOrEmpty(writerName))
-                {
-                    writers.Add(new WriterInfo
-                    {
-                        WriterId = writerName,
-                        WriterName = writerName
-                    });
-                }
-            }
-        }
+            PropertyNameCaseInsensitive = true
+        });
+
+        // Set the dataset metadata
+        analysisResult.DatasetId = dataset.Id;
+        analysisResult.DatasetName = dataset.Name;
+        analysisResult.Status = dataset.Status.ToString();
+        analysisResult.AnalyzedAt = dataset.UpdatedAt;
         
-        logger.LogInformation("Retrieved {WriterCount} writers for dataset {DatasetId}", writers.Count, datasetId);
+        logger.LogInformation("Retrieved {WriterCount} writers for dataset {DatasetId}", analysisResult.NumWriters, datasetId);
         
-        return new DatasetAnalysisResultDto
-        {
-            DatasetId = dataset.Id,
-            DatasetName = dataset.Name,
-            Status = dataset.Status.ToString(),
-            AnalyzedAt = dataset.UpdatedAt,
-            Writers = writers
-        };
+        return analysisResult;
     }
 
     /// <summary>
@@ -294,14 +280,64 @@ public class TaskService : ITaskService
             task.UseDefaultModel ? "default model" : $"custom model (ID: {task.ModelId})",
             task.SelectedWriters.Count);
     }
-    
+
+    /// <summary>
+    /// Gets task execution information including all container names for external processing.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <returns>The task execution information.</returns>
+    public async Task<TaskExecutionInfoDto> GetTaskExecutionInfoAsync(Guid taskId)
+    {
+        var task = await GetRawTaskByIdAsync(taskId);
+        
+        // Get dataset information
+        var dataset = await unitOfWork.Datasets.GetByIdAsync(task.DatasetId);
+        if (dataset == null || !dataset.IsActive)
+        {
+            throw new KeyNotFoundException($"Dataset with ID {task.DatasetId} not found.");
+        }
+
+        // Get model information if using custom model
+        string modelContainerName = null;
+        if (!task.UseDefaultModel && task.ModelId.HasValue)
+        {
+            var model = await unitOfWork.Models.GetByIdAsync(task.ModelId.Value);
+            if (model == null || !model.IsActive)
+            {
+                throw new KeyNotFoundException($"Model with ID {task.ModelId.Value} not found.");
+            }
+            modelContainerName = model.ContainerName;
+        }
+
+        var executionInfo = new TaskExecutionInfoDto
+        {
+            TaskId = task.Id,
+            TaskContainerName = $"task-{task.Id}",
+            DatasetContainerName = dataset.ContainerName,
+            ModelContainerName = modelContainerName,
+            UseDefaultModel = task.UseDefaultModel,
+            SelectedWriters = task.SelectedWriters,
+            QueryImageFileName = "query.png",
+            Status = task.Status.ToString()
+        };
+
+        logger.LogInformation("Retrieved execution info for task {TaskId}: Dataset={DatasetContainer}, Model={ModelContainer}, UseDefault={UseDefault}",
+            taskId, dataset.ContainerName, modelContainerName ?? "default", task.UseDefaultModel);
+
+        return executionInfo;
+    }
+
+    /// <summary>
+    /// Gets the raw task by ID, ensuring it is active.
+    /// </summary>
+    /// <param name="id">The id</param>
+    /// <returns>Returns the task details.</returns>
+    /// <exception cref="KeyNotFoundException"></exception>
     private async Task<WriterIdentificationTask> GetRawTaskByIdAsync(Guid id)
     {
         var task = await unitOfWork.Tasks.GetByIdAsync(id);
         if (task == null || !task.IsActive)
-        {
             throw new KeyNotFoundException($"Task with ID {id} not found.");
-        }
         return task;
     }
 } 

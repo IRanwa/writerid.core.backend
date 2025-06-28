@@ -105,33 +105,7 @@ public class TasksController : BaseApiController
         return Ok(new { message = "Task results updated", taskId = id });
     }
 
-    /// <summary>
-    /// Gets task execution details for the executor service.
-    /// This endpoint provides the information needed by the task executor to process the task.
-    /// </summary>
-    /// <param name="id">The task identifier.</param>
-    /// <returns>The task execution details.</returns>
-    [HttpGet("{id}/execution-details")]
-    public async Task<IActionResult> GetExecutionDetails(Guid id)
-    {
-        var taskDto = await taskService.GetTaskByIdAsync(id);
-        
-        var executionDetails = new
-        {
-            taskId = taskDto.Id,
-            useDefaultModel = taskDto.UseDefaultModel,
-            modelId = taskDto.ModelId,
-            datasetId = taskDto.DatasetId,
-            selectedWriters = taskDto.SelectedWriters,
-            queryImagePath = taskDto.QueryImagePath,
-            status = taskDto.Status.ToString(),
-            createdAt = taskDto.CreatedAt,
-            name = taskDto.Name,
-            description = taskDto.Description
-        };
 
-        return Ok(executionDetails);
-    }
 
     /// <summary>
     /// Deletes a task.

@@ -66,4 +66,11 @@ public interface ITaskService
     /// </summary>
     /// <param name="id">The task identifier.</param>
     Task StartTaskAsync(Guid id);
+
+    /// <summary>
+    /// Gets task execution information including all container names for external processing.
+    /// </summary>
+    /// <param name="taskId">The task identifier.</param>
+    /// <returns>The task execution information.</returns>
+    Task<TaskExecutionInfoDto> GetTaskExecutionInfoAsync(Guid taskId);
 } 
