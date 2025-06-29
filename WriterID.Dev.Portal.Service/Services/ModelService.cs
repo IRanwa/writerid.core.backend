@@ -227,34 +227,39 @@ public class ModelService : IModelService
     }
 
     /// <summary>
-    /// Starts the training of a model.
+    /// Retrains a model by resetting its status and queuing it for training.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    public async Task StartTrainingAsync(Guid id)
+    public async Task RetrainModelAsync(Guid id)
     {
         var model = await GetRawModelByIdAsync(id);
+        
+        // Get the training dataset to access its container name
+        var dataset = await unitOfWork.Datasets.GetByIdAsync(model.TrainingDatasetId);
+        if (dataset == null)
+        {
+            throw new KeyNotFoundException($"Training dataset with ID {model.TrainingDatasetId} not found.");
+        }
 
+        // Reset model status to Reconfigure for retraining
+        model.Status = ProcessingStatus.Reconfigure;
+        model.UpdatedAt = DateTime.UtcNow;
+        
+        unitOfWork.Models.Update(model);
+        await unitOfWork.SaveChangesAsync();
+
+        // Send queue message for training with same format as CreateModel
         var message = new
         {
-            task = "train_model",
-            taskId = id.ToString(),
-            container_name = model.ContainerName,
-            parameters = new
-            {
-                epochs = 100,
-                batch_size = 32,
-                learning_rate = 0.001
-            }
+            task = "train",
+            dataset_container_name = dataset.ContainerName,
+            model_container_name = model.ContainerName
         };
 
         var messageString = JsonSerializer.Serialize(message);
         await queueService.SendMessageAsync("writerid-task-queue", messageString);
 
-        model.Status = ProcessingStatus.Processing;
-        model.UpdatedAt = DateTime.UtcNow;
-        
-        unitOfWork.Models.Update(model);
-        await unitOfWork.SaveChangesAsync();
+        logger.LogInformation("Model {ModelId} queued for retraining", id);
     }
 
     private async Task<WriterIdentificationModel> GetRawModelByIdAsync(Guid id)

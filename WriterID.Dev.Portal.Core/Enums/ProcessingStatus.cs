@@ -23,5 +23,10 @@ public enum ProcessingStatus
     /// <summary>
     /// The operation has failed during processing.
     /// </summary>
-    Failed = 3
+    Failed = 3,
+
+    /// <summary>
+    /// The operation is being reconfigured or retrained.
+    /// </summary>
+    Reconfigure = 4
 } 

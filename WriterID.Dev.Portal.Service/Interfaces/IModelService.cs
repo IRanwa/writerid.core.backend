@@ -51,8 +51,8 @@ public interface IModelService
     Task DeleteModelAsync(Guid id);
 
     /// <summary>
-    /// Starts the training of a model.
+    /// Retrains a model by resetting its status and queuing it for training.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    Task StartTrainingAsync(Guid id);
+    Task RetrainModelAsync(Guid id);
 } 

@@ -150,17 +150,17 @@ public class ModelsController : BaseApiController
     }
 
     /// <summary>
-    /// Starts the training of a model.
+    /// Retrains a model by resetting its status and queuing it for training.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    /// <returns>An accepted response if training started successfully.</returns>
-    [HttpPost("{id}/train")]
-    public async Task<IActionResult> StartTraining(Guid id)
+    /// <returns>An accepted response if retraining started successfully.</returns>
+    [HttpPost("{id}/retrain")]
+    public async Task<IActionResult> Retrain(Guid id)
     {
         try
         {
-            await modelService.StartTrainingAsync(id);
-            return Ok(new { message = "Model training has been queued." });
+            await modelService.RetrainModelAsync(id);
+            return Ok(new { message = "Model has been queued for retraining." });
         }
         catch (KeyNotFoundException ex)
         {
@@ -172,7 +172,7 @@ public class ModelsController : BaseApiController
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "An error occurred while starting model training.", error = ex.Message });
+            return StatusCode(500, new { message = "An error occurred while starting model retraining.", error = ex.Message });
         }
     }
 }
