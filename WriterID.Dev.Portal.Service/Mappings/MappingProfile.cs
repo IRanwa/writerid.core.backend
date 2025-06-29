@@ -25,7 +25,6 @@ public class MappingProfile : Profile
         // Model Mappings
         CreateMap<WriterIdentificationModel, ModelDto>();
         CreateMap<CreateModelDto, WriterIdentificationModel>();
-        CreateMap<UpdateModelDto, WriterIdentificationModel>();
 
         // User Mappings
         CreateMap<UserForRegistrationDto, User>()

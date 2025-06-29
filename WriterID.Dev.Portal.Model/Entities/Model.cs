@@ -22,12 +22,6 @@ public class WriterIdentificationModel
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the description of the model.
-    /// </summary>
-    [MaxLength(1000)]
-    public string Description { get; set; }
-
-    /// <summary>
     /// Gets or sets the Azure Storage container name where the model files are stored.
     /// </summary>
     public string ContainerName { get; set; }

@@ -19,11 +19,6 @@ public class ModelDto
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the description of the model.
-    /// </summary>
-    public string Description { get; set; }
-
-    /// <summary>
     /// Gets or sets the current status of the model.
     /// </summary>
     public ProcessingStatus Status { get; set; }
@@ -32,6 +27,11 @@ public class ModelDto
     /// Gets or sets the ID of the dataset used for training this model.
     /// </summary>
     public Guid TrainingDatasetId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the dataset used for training this model.
+    /// </summary>
+    public string TrainingDatasetName { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the user who created the model.

@@ -30,12 +30,12 @@ public interface IModelService
     Task<List<ModelDto>> GetUserModelsAsync(int userId);
 
     /// <summary>
-    /// Updates an existing model.
+    /// Updates the status of an existing model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
-    /// <param name="dto">The update data.</param>
+    /// <param name="dto">The status update data.</param>
     /// <returns>The updated model.</returns>
-    Task<ModelDto> UpdateModelAsync(Guid id, UpdateModelDto dto);
+    Task<ModelDto> UpdateModelStatusAsync(Guid id, UpdateModelStatusDto dto);
 
     /// <summary>
     /// Deletes a model.

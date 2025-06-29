@@ -31,8 +31,23 @@ public class ModelsController : BaseApiController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateModelDto dto)
     {
-        var modelDto = await modelService.CreateModelAsync(dto, CurrentUserId);
-        return CreatedAtAction(nameof(GetById), new { id = modelDto.Id }, modelDto);
+        try
+        {
+            var modelDto = await modelService.CreateModelAsync(dto, CurrentUserId);
+            return CreatedAtAction(nameof(GetById), new { id = modelDto.Id }, new { model = modelDto, message = "Model created successfully." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while creating the model.", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -43,8 +58,19 @@ public class ModelsController : BaseApiController
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var modelDto = await modelService.GetModelByIdAsync(id);
-        return Ok(modelDto);
+        try
+        {
+            var modelDto = await modelService.GetModelByIdAsync(id);
+            return Ok(new { model = modelDto, message = "Model retrieved successfully." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving the model.", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -54,22 +80,20 @@ public class ModelsController : BaseApiController
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var modelDtos = await modelService.GetUserModelsAsync(CurrentUserId);
-        return Ok(modelDtos);
+        try
+        {
+            var modelDtos = await modelService.GetUserModelsAsync(CurrentUserId);
+            return Ok(new { models = modelDtos, message = "Models retrieved successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving models.", error = ex.Message });
+        }
     }
 
-    /// <summary>
-    /// Updates an existing model.
-    /// </summary>
-    /// <param name="id">The model identifier.</param>
-    /// <param name="dto">The update data.</param>
-    /// <returns>The updated model.</returns>
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateModelDto dto)
-    {
-        var modelDto = await modelService.UpdateModelAsync(id, dto);
-        return Ok(modelDto);
-    }
+
+
+
 
     /// <summary>
     /// Deletes a model.
@@ -79,8 +103,23 @@ public class ModelsController : BaseApiController
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await modelService.DeleteModelAsync(id);
-        return NoContent();
+        try
+        {
+            await modelService.DeleteModelAsync(id);
+            return Ok(new { message = "Model deleted successfully." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while deleting the model.", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -91,7 +130,22 @@ public class ModelsController : BaseApiController
     [HttpPost("{id}/train")]
     public async Task<IActionResult> StartTraining(Guid id)
     {
-        await modelService.StartTrainingAsync(id);
-        return Accepted();
+        try
+        {
+            await modelService.StartTrainingAsync(id);
+            return Ok(new { message = "Model training has been queued." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while starting model training.", error = ex.Message });
+        }
     }
 }

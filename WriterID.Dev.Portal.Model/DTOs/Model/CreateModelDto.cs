@@ -15,12 +15,6 @@ public class CreateModelDto
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the description of the model.
-    /// </summary>
-    [StringLength(1000)]
-    public string Description { get; set; }
-
-    /// <summary>
     /// Gets or sets the ID of the dataset to use for training.
     /// </summary>
     [Required]
