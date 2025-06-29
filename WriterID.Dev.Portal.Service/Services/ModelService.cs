@@ -17,6 +17,7 @@ public class ModelService : IModelService
     private readonly IUnitOfWork unitOfWork;
     private readonly IQueueService queueService;
     private readonly IAzureStorageService storageService;
+    private readonly IBlobService blobService;
     private readonly ILogger<ModelService> logger;
     private readonly IMapper mapper;
 
@@ -26,18 +27,21 @@ public class ModelService : IModelService
     /// <param name="unitOfWork">The unit of work.</param>
     /// <param name="queueService">The queue service.</param>
     /// <param name="storageService">The Azure storage service.</param>
+    /// <param name="blobService">The blob service.</param>
     /// <param name="logger">The logger instance.</param>
     /// <param name="mapper">The mapper instance.</param>
     public ModelService(
         IUnitOfWork unitOfWork,
         IQueueService queueService,
         IAzureStorageService storageService,
+        IBlobService blobService,
         ILogger<ModelService> logger,
         IMapper mapper)
     {
         this.unitOfWork = unitOfWork;
         this.queueService = queueService;
         this.storageService = storageService;
+        this.blobService = blobService;
         this.logger = logger;
         this.mapper = mapper;
     }
@@ -143,8 +147,6 @@ public class ModelService : IModelService
         return modelDtos;
     }
 
-
-
     /// <summary>
     /// Updates the status of an existing model.
     /// </summary>
@@ -168,6 +170,45 @@ public class ModelService : IModelService
         modelDto.TrainingDatasetName = dataset?.Name ?? "Unknown Dataset";
 
         return modelDto;
+    }
+
+    /// <summary>
+    /// Gets the training results for a model.
+    /// </summary>
+    /// <param name="id">The model identifier.</param>
+    /// <returns>The training results if available.</returns>
+    public async Task<ModelTrainingResultDto> GetModelTrainingResultsAsync(Guid id)
+    {
+        var model = await GetRawModelByIdAsync(id);
+
+        try
+        {
+            // Download the training_results.json file from the model's container
+            var trainingResultsJson = await blobService.DownloadFileAsStringAsync(model.ContainerName, "training_results.json");
+            
+            if (string.IsNullOrEmpty(trainingResultsJson))
+            {
+                throw new FileNotFoundException("Training results file not found. Model may not be trained yet.");
+            }
+
+            // Parse the JSON into our DTO
+            var trainingResults = JsonSerializer.Deserialize<ModelTrainingResultDto>(trainingResultsJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (trainingResults == null)
+            {
+                throw new InvalidOperationException("Failed to parse training results. The file may be corrupted.");
+            }
+
+            return trainingResults;
+        }
+        catch (Exception ex) when (!(ex is FileNotFoundException || ex is KeyNotFoundException))
+        {
+            logger.LogError(ex, "Error retrieving training results for model {ModelId}", id);
+            throw new InvalidOperationException("Failed to retrieve training results. The file may not exist or may be corrupted.");
+        }
     }
 
     /// <summary>

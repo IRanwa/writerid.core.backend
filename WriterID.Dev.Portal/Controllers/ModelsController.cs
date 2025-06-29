@@ -91,9 +91,36 @@ public class ModelsController : BaseApiController
         }
     }
 
-
-
-
+    /// <summary>
+    /// Gets the training results for a model.
+    /// </summary>
+    /// <param name="id">The model identifier.</param>
+    /// <returns>The training results if available.</returns>
+    [HttpGet("{id}/training-results")]
+    public async Task<IActionResult> GetTrainingResults(Guid id)
+    {
+        try
+        {
+            var trainingResults = await modelService.GetModelTrainingResultsAsync(id);
+            return Ok(new { trainingResults = trainingResults, message = "Training results retrieved successfully." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (FileNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving training results.", error = ex.Message });
+        }
+    }
 
     /// <summary>
     /// Deletes a model.

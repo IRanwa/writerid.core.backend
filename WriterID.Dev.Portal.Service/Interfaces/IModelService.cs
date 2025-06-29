@@ -38,6 +38,13 @@ public interface IModelService
     Task<ModelDto> UpdateModelStatusAsync(Guid id, UpdateModelStatusDto dto);
 
     /// <summary>
+    /// Gets the training results for a model.
+    /// </summary>
+    /// <param name="id">The model identifier.</param>
+    /// <returns>The training results if available.</returns>
+    Task<ModelTrainingResultDto> GetModelTrainingResultsAsync(Guid id);
+
+    /// <summary>
     /// Deletes a model.
     /// </summary>
     /// <param name="id">The model identifier.</param>
