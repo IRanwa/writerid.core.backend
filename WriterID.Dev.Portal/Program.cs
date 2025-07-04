@@ -112,6 +112,7 @@ builder.Services.AddHttpClient<ITaskExecutorService, TaskExecutorService>();
 builder.Services.AddScoped<IDatasetService, DatasetService>();
 builder.Services.AddScoped<IModelService, ModelService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IAzureStorageService, AzureStorageService>();
 builder.Services.AddScoped<IAzureQueueService, AzureQueueService>();
 builder.Services.AddScoped<IBlobService, BlobService>();
