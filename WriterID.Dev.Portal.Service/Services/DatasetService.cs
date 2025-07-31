@@ -56,7 +56,10 @@ public class DatasetService : IDatasetService
     /// <returns>The created dataset.</returns>
     public async Task<Uri> CreateDatasetAsync(CreateDatasetRequestDto createDatasetDto, int userId)
     {
-        var dataset = mapper.Map<Dataset>(createDatasetDto);
+        var dataset = new Dataset
+        {
+            Name = createDatasetDto.Name
+        };
         dataset.UserId = userId;
         dataset.CreatedAt = DateTime.UtcNow;
         dataset.IsActive = true;

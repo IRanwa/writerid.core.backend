@@ -19,8 +19,6 @@ public class MappingProfile : Profile
 
         // Dataset Mappings
         CreateMap<Dataset, DatasetDto>();
-        CreateMap<CreateDatasetDto, Dataset>();
-        CreateMap<UpdateDatasetDto, Dataset>();
 
         // Model Mappings
         CreateMap<WriterIdentificationModel, ModelDto>();
